@@ -35,4 +35,20 @@ object AccountsTable : IntIdTable("accounts") {
     val emailVerificationExpiresAtEpochMillis = long("email_verification_expires_at_epoch_millis").nullable()
 
     val createdAtEpochMillis = long("created_at_epoch_millis")
+
+
+
+    val tenantProvisioned = bool("tenant_provisioned").default(false)
+    val tenantProvisionError = text("tenant_provision_error").nullable()
+    val tenantProvisionedAtEpochMillis = long("tenant_provisioned_at_epoch_millis").nullable()
+
+    val tenantId = integer("tenant_id").nullable()
+    val tenantSchema = varchar("tenant_schema", 150).nullable()
+    val tenantSlug = varchar("tenant_slug", 150).nullable()
+    val defaultDomain = varchar("default_domain", 255).nullable()
+    val tenantStatus = varchar("tenant_status", 50).nullable()
+
+    val principalLoginUserId = varchar("principal_login_user_id", 100).nullable()
+    val principalPin = varchar("principal_pin", 50).nullable()
+
 }

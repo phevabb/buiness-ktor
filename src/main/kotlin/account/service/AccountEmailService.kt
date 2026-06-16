@@ -1,6 +1,4 @@
-package com.example.account.email
-
-
+package com.example.account.service
 
 
 import com.example.config.AppConfig
@@ -11,42 +9,20 @@ import jakarta.mail.Session
 import jakarta.mail.Transport
 import jakarta.mail.internet.InternetAddress
 import jakarta.mail.internet.MimeMessage
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.withContext
 import java.util.Properties
 
 object AccountEmailService {
 
-    suspend fun sendVerificationEmail(
+    fun sendVerificationEmail(
         to: String,
         schoolName: String,
         verificationUrl: String
-    ) = withContext(Dispatchers.IO) {
-
-        println("Preparing verification email for: $to")
-        println("SMTP host: ${AppConfig.smtpHost}")
-        println("SMTP port: ${AppConfig.smtpPort}")
-        println("SMTP SSL: ${AppConfig.emailUseSsl}")
-        println("Verification URL: $verificationUrl")
-
+    ) {
         val properties = Properties().apply {
             put("mail.smtp.auth", "true")
+            put("mail.smtp.starttls.enable", "true")
             put("mail.smtp.host", AppConfig.smtpHost)
             put("mail.smtp.port", AppConfig.smtpPort.toString())
-
-            put("mail.smtp.connectiontimeout", "15000")
-            put("mail.smtp.timeout", "15000")
-            put("mail.smtp.writetimeout", "15000")
-
-            if (AppConfig.emailUseSsl) {
-                put("mail.smtp.ssl.enable", "true")
-                put("mail.smtp.ssl.trust", AppConfig.smtpHost)
-                put("mail.smtp.starttls.enable", "false")
-            } else {
-                put("mail.smtp.starttls.enable", "true")
-                put("mail.smtp.starttls.required", "true")
-                put("mail.smtp.ssl.enable", "false")
-            }
         }
 
         val session = Session.getInstance(
@@ -60,8 +36,6 @@ object AccountEmailService {
                 }
             }
         )
-
-        session.debug = AppConfig.emailDebug
 
         val html = buildVerificationEmailHtml(
             schoolName = schoolName,
@@ -86,70 +60,48 @@ object AccountEmailService {
         }
 
         Transport.send(message)
-
-        println("Verification email sent successfully to: $to")
     }
 
     private fun buildVerificationEmailHtml(
         schoolName: String,
         verificationUrl: String
     ): String {
-        val safeSchoolName = escapeHtml(schoolName)
-        val safeVerificationUrl = escapeHtml(verificationUrl)
-
         return """
             <!doctype html>
             <html>
             <body style="margin:0;padding:0;background:#f4f7fb;font-family:Arial,sans-serif;">
                 <div style="max-width:640px;margin:0 auto;padding:32px;">
                     <div style="background:#071926;color:#ffffff;border-radius:22px;padding:32px;">
-                        <div style="width:56px;height:56px;border-radius:18px;background:#f5d58c;color:#071926;display:flex;align-items:center;justify-content:center;font-size:26px;font-weight:900;">
-                            P
-                        </div>
-
-                        <h1 style="margin:28px 0 12px;font-size:28px;line-height:1.2;">
+                        <h1 style="margin:0 0 12px;font-size:28px;">
                             Verify your Phena account
                         </h1>
 
                         <p style="color:#d7e3f4;font-size:16px;line-height:1.7;">
-                            Your school <strong>$safeSchoolName</strong> has started registration on
-                            Phena School Management System.
+                            Your school <strong>$schoolName</strong> has started registration on Phena.
                         </p>
 
                         <p style="color:#d7e3f4;font-size:16px;line-height:1.7;">
-                            Click the button below to verify your email address and activate your school account.
+                            Click the button below to verify your email address.
                         </p>
 
                         <p style="margin:32px 0;">
-                            $safeVerificationUrl
+                            <a href="$verificationUrl"
+                               style="background:#f5d58c;color:#071926;padding:14px 22px;border-radius:14px;text-decoration:none;font-weight:800;">
                                 Verify Email
                             </a>
                         </p>
 
-                        <p style="color:#aab8c8;font-size:13px;line-height:1.7;">
-                            If the button does not work, copy and paste this link into your browser:
+                        <p style="color:#aab8c8;font-size:13px;">
+                            If the button does not work, copy this link:
                         </p>
 
                         <p style="word-break:break-all;color:#f5d58c;font-size:13px;">
-                            $safeVerificationUrl
-                        </p>
-
-                        <p style="color:#aab8c8;font-size:13px;margin-top:28px;">
-                            This verification link expires in 24 hours.
+                            $verificationUrl
                         </p>
                     </div>
                 </div>
             </body>
             </html>
         """.trimIndent()
-    }
-
-    private fun escapeHtml(value: String): String {
-        return value
-            .replace("&", "&amp;")
-            .replace("<", "&lt;")
-            .replace(">", "&gt;")
-            .replace("\"", "&quot;")
-            .replace("'", "&#x27;")
     }
 }

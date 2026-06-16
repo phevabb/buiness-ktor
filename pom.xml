@@ -19,7 +19,38 @@
     </properties>
 
     <dependencies>
+
+        <dependency>
+            <groupId>org.jetbrains.kotlin</groupId>
+            <artifactId>kotlin-stdlib</artifactId>
+            <version>${kotlin_version}</version>
+        </dependency>
+
+        <dependency>
+            <groupId>org.jetbrains.kotlin</groupId>
+            <artifactId>kotlin-reflect</artifactId>
+            <version>${kotlin_version}</version>
+        </dependency>
+
         <!--tor -->    <!-- Password hashing -->
+        <dependency>
+            <groupId>io.github.cdimascio</groupId>
+            <artifactId>dotenv-kotlin</artifactId>
+            <version>6.5.1</version>
+            <exclusions>
+                <exclusion>
+                    <groupId>org.jetbrains.kotlin</groupId>
+                    <artifactId>kotlin-stdlib</artifactId>
+                </exclusion>
+            </exclusions>
+        </dependency>
+        <!-- SMTP email sending: Jakarta Mail implementation -->
+        <dependency>
+            <groupId>org.eclipse.angus</groupId>
+            <artifactId>angus-mail</artifactId>
+            <version>2.0.4</version>
+        </dependency>
+
         <dependency>
             <groupId>io.ktor</groupId>
             <artifactId>ktor-server-core-jvm</artifactId>
@@ -61,11 +92,11 @@
             <artifactId>ktor-server-call-logging-jvm</artifactId>
             <version>${ktor_version}</version>
         </dependency>
-        <dependency>
-            <groupId>io.ktor</groupId>
-            <artifactId>ktor-server-config-yaml-jvm</artifactId>
-            <version>${ktor_version}</version>
-        </dependency>
+<!--        <dependency>-->
+<!--            <groupId>io.ktor</groupId>-->
+<!--            <artifactId>ktor-server-config-yaml-jvm</artifactId>-->
+<!--            <version>${ktor_version}</version>-->
+<!--        </dependency>-->
         <dependency>
             <groupId>io.ktor</groupId>
             <artifactId>ktor-server-cors-jvm</artifactId>
@@ -162,12 +193,7 @@
             <version>3.5.0</version>
             <scope>implementation</scope>
         </dependency>
-        <dependency>
-            <groupId>io.ktor</groupId>
-            <artifactId>ktor-serialization-kotlinx-json</artifactId>
-            <version>3.5.0</version>
-            <scope>implementation</scope>
-        </dependency>
+
         <dependency>
             <groupId>io.ktor</groupId>
             <artifactId>ktor-server-content-negotiation</artifactId>
@@ -179,6 +205,24 @@
             <artifactId>ktor-serialization-kotlinx-json</artifactId>
             <version>3.5.0</version>
             <scope>implementation</scope>
+        </dependency>
+        <!-- Ktor HTTP Client for calling tenant-ktor from business-ktor -->
+        <dependency>
+            <groupId>io.ktor</groupId>
+            <artifactId>ktor-client-core-jvm</artifactId>
+            <version>${ktor_version}</version>
+        </dependency>
+
+        <dependency>
+            <groupId>io.ktor</groupId>
+            <artifactId>ktor-client-cio-jvm</artifactId>
+            <version>${ktor_version}</version>
+        </dependency>
+
+        <dependency>
+            <groupId>io.ktor</groupId>
+            <artifactId>ktor-client-content-negotiation-jvm</artifactId>
+            <version>${ktor_version}</version>
         </dependency>
 
 

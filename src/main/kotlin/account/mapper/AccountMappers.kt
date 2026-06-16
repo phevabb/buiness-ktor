@@ -1,6 +1,5 @@
 package com.example.account.mapper
 
-
 import com.example.account.dto.AccountResponse
 import com.example.account.model.Account
 import com.example.account.table.AccountsTable
@@ -22,7 +21,20 @@ fun ResultRow.toAccount(): Account =
         isStaff = this[AccountsTable.isStaff],
         isEmailVerified = this[AccountsTable.isEmailVerified],
         profilePictureUrl = this[AccountsTable.profilePictureUrl],
-        createdAtEpochMillis = this[AccountsTable.createdAtEpochMillis]
+        createdAtEpochMillis = this[AccountsTable.createdAtEpochMillis],
+
+        tenantProvisioned = this[AccountsTable.tenantProvisioned],
+        tenantProvisionError = this[AccountsTable.tenantProvisionError],
+        tenantProvisionedAtEpochMillis = this[AccountsTable.tenantProvisionedAtEpochMillis],
+
+        tenantId = this[AccountsTable.tenantId],
+        tenantSchema = this[AccountsTable.tenantSchema],
+        tenantSlug = this[AccountsTable.tenantSlug],
+        defaultDomain = this[AccountsTable.defaultDomain],
+        tenantStatus = this[AccountsTable.tenantStatus],
+
+        principalLoginUserId = this[AccountsTable.principalLoginUserId],
+        principalPin = this[AccountsTable.principalPin]
     )
 
 fun Account.toResponse(): AccountResponse =
@@ -42,5 +54,18 @@ fun Account.toResponse(): AccountResponse =
         isStaff = isStaff,
         isEmailVerified = isEmailVerified,
         profilePictureUrl = profilePictureUrl,
-        createdAtEpochMillis = createdAtEpochMillis
+        createdAtEpochMillis = createdAtEpochMillis,
+
+        tenantProvisioned = tenantProvisioned,
+        tenantProvisionError = tenantProvisionError,
+        tenantProvisionedAtEpochMillis = tenantProvisionedAtEpochMillis,
+
+        tenantId = tenantId,
+        tenantSchema = tenantSchema,
+        tenantSlug = tenantSlug,
+        defaultDomain = defaultDomain,
+        tenantStatus = tenantStatus,
+
+        principalLoginUserId = principalLoginUserId,
+        principalPin = principalPin
     )

@@ -46,8 +46,23 @@ data class AccountResponse(
     val isStaff: Boolean,
     val isEmailVerified: Boolean,
     val profilePictureUrl: String?,
-    val createdAtEpochMillis: Long
+    val createdAtEpochMillis: Long,
+
+    val tenantProvisioned: Boolean,
+    val tenantProvisionError: String?,
+    val tenantProvisionedAtEpochMillis: Long?,
+
+    val tenantId: Int?,
+    val tenantSchema: String?,
+    val tenantSlug: String?,
+    val defaultDomain: String?,
+    val tenantStatus: String?,
+
+    val principalLoginUserId: String?,
+    val principalPin: String?
 )
+
+
 
 @Serializable
 data class RegisterAccountResponse(

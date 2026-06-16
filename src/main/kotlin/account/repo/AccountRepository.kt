@@ -8,6 +8,7 @@ import com.example.account.dto.UpdateAccountRequest
 import com.example.account.mapper.toAccount
 import com.example.account.mapper.toResponse
 import com.example.account.security.AccountSecurity
+import com.example.account.service.CreateTenantResponse
 import com.example.account.table.AccountsTable
 import org.jetbrains.exposed.v1.core.eq
 
@@ -301,6 +302,59 @@ object AccountsRepository {
             .singleOrNull()
             ?.toAccount()
             ?.toResponse()
+    }
+
+
+
+    fun saveTenantProvisioningSuccess(
+        accountId: Int,
+        tenantResponse: CreateTenantResponse
+    ): AccountResponse = transaction {
+
+        AccountsTable.update({ AccountsTable.id eq accountId }) {
+            it[tenantProvisioned] = true
+            it[tenantProvisionError] = null
+            it[tenantProvisionedAtEpochMillis] = System.currentTimeMillis()
+
+            it[tenantId] = tenantResponse.tenantId
+            it[tenantSchema] = tenantResponse.tenantSchema
+            it[tenantSlug] = tenantResponse.tenantSlug
+            it[defaultDomain] = tenantResponse.defaultDomain
+            it[tenantStatus] = tenantResponse.status
+
+            it[principalLoginUserId] = tenantResponse.principalLoginUserId
+            it[principalPin] = tenantResponse.principalPin
+        }
+
+        AccountsTable
+            .selectAll()
+            .where { AccountsTable.id eq accountId }
+            .singleOrNull()
+            ?.toAccount()
+            ?.toResponse()
+            ?: error("Account not found after saving tenant provisioning response.")
+    }
+
+    fun saveTenantProvisioningFailure(
+        accountId: Int,
+        errorMessage: String
+    ): AccountResponse = transaction {
+
+        AccountsTable.update({ AccountsTable.id eq accountId }) {
+            it[tenantProvisioned] = false
+            it[tenantProvisionError] = errorMessage.take(5000)
+            it[tenantProvisionedAtEpochMillis] = null
+
+            it[tenantStatus] = "failed"
+        }
+
+        AccountsTable
+            .selectAll()
+            .where { AccountsTable.id eq accountId }
+            .singleOrNull()
+            ?.toAccount()
+            ?.toResponse()
+            ?: error("Account not found after saving tenant provisioning failure.")
     }
 
     private fun validateCreateRequest(
