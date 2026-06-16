@@ -98,50 +98,171 @@ object AccountEmailService {
         val safeVerificationUrl = escapeHtml(verificationUrl)
 
         return """
-            <!doctype html>
-            <html>
-            <body style="margin:0;padding:0;background:#f4f7fb;font-family:Arial,sans-serif;">
-                <div style="max-width:640px;margin:0 auto;padding:32px;">
-                    <div style="background:#071926;color:#ffffff;border-radius:22px;padding:32px;">
-                        <div style="width:56px;height:56px;border-radius:18px;background:#f5d58c;color:#071926;display:flex;align-items:center;justify-content:center;font-size:26px;font-weight:900;">
-                            P
-                        </div>
 
-                        <h1 style="margin:28px 0 12px;font-size:28px;line-height:1.2;">
-                            Verify your Phena account
-                        </h1>
+<!doctype html>
 
-                        <p style="color:#d7e3f4;font-size:16px;line-height:1.7;">
-                            Your school <strong>$safeSchoolName</strong> has started registration on
-                            Phena School Management System.
-                        </p>
+<html>
+<body style="margin:0;padding:0;background:#eef6ff;font-family:'Segoe UI',Arial,sans-serif;">
 
-                        <p style="color:#d7e3f4;font-size:16px;line-height:1.7;">
-                            Click the button below to verify your email address and activate your school account.
-                        </p>
+```
+<div style="max-width:680px;margin:0 auto;padding:40px 20px;">
 
-                        <p style="margin:32px 0;">
-                            $safeVerificationUrl
-                                Verify Email
-                            </a>
-                        </p>
+    <!-- Card -->
+    <div style="
+        background:linear-gradient(180deg,#ffffff 0%,#f8fbff 100%);
+        border-radius:28px;
+        overflow:hidden;
+        box-shadow:0 20px 50px rgba(29,78,216,0.12);
+        border:1px solid #dbeafe;
+    ">
 
-                        <p style="color:#aab8c8;font-size:13px;line-height:1.7;">
-                            If the button does not work, copy and paste this link into your browser:
-                        </p>
+        <!-- Header -->
+        <div style="
+            background:linear-gradient(135deg,#2563eb 0%,#60a5fa 100%);
+            padding:40px;
+            text-align:center;
+        ">
 
-                        <p style="word-break:break-all;color:#f5d58c;font-size:13px;">
-                            $safeVerificationUrl
-                        </p>
+            <div style="
+                width:70px;
+                height:70px;
+                margin:0 auto;
+                border-radius:20px;
+                background:rgba(255,255,255,0.18);
+                color:#ffffff;
+                font-size:34px;
+                font-weight:800;
+                line-height:70px;
+                backdrop-filter:blur(10px);
+            ">
+                P
+            </div>
 
-                        <p style="color:#aab8c8;font-size:13px;margin-top:28px;">
-                            This verification link expires in 24 hours.
-                        </p>
-                    </div>
-                </div>
-            </body>
-            </html>
-        """.trimIndent()
+            <h1 style="
+                margin:24px 0 0;
+                color:#ffffff;
+                font-size:32px;
+                font-weight:700;
+                line-height:1.2;
+            ">
+                Verify Your Account
+            </h1>
+
+            <p style="
+                margin:12px auto 0;
+                color:rgba(255,255,255,0.9);
+                font-size:16px;
+                max-width:500px;
+                line-height:1.7;
+            ">
+                Welcome to Phena School Management System
+            </p>
+
+        </div>
+
+        <!-- Body -->
+        <div style="padding:42px;">
+
+            <p style="
+                margin:0 0 18px;
+                color:#334155;
+                font-size:16px;
+                line-height:1.8;
+            ">
+                Your school <strong style="color:#1e40af;">$safeSchoolName</strong>
+                has successfully started registration on the Phena platform.
+            </p>
+
+            <p style="
+                margin:0;
+                color:#64748b;
+                font-size:16px;
+                line-height:1.8;
+            ">
+                Please verify your email address to activate your school account and gain full access to the platform.
+            </p>
+
+            <!-- CTA -->
+            <div style="text-align:center;margin:40px 0;">
+                <a href="$safeVerificationUrl"
+                   style="
+                       display:inline-block;
+                       background:linear-gradient(135deg,#2563eb,#3b82f6);
+                       color:#ffffff;
+                       text-decoration:none;
+                       padding:16px 38px;
+                       border-radius:14px;
+                       font-size:16px;
+                       font-weight:600;
+                       box-shadow:0 10px 25px rgba(37,99,235,0.25);
+                   ">
+                    Verify Email Address
+                </a>
+            </div>
+
+            <!-- Link -->
+            <div style="
+                background:#eff6ff;
+                border:1px solid #bfdbfe;
+                border-radius:16px;
+                padding:18px;
+            ">
+                <p style="
+                    margin:0 0 10px;
+                    color:#475569;
+                    font-size:13px;
+                    font-weight:600;
+                ">
+                    Button not working?
+                </p>
+
+                <p style="
+                    margin:0;
+                    word-break:break-all;
+                    color:#2563eb;
+                    font-size:13px;
+                    line-height:1.6;
+                ">
+                    $safeVerificationUrl
+                </p>
+            </div>
+
+            <!-- Footer -->
+            <div style="
+                margin-top:30px;
+                padding-top:24px;
+                border-top:1px solid #e2e8f0;
+            ">
+                <p style="
+                    margin:0;
+                    color:#94a3b8;
+                    font-size:13px;
+                    line-height:1.7;
+                ">
+                    This verification link expires in 24 hours for security purposes.
+                </p>
+            </div>
+
+        </div>
+
+    </div>
+
+    <p style="
+        text-align:center;
+        margin-top:24px;
+        color:#94a3b8;
+        font-size:12px;
+    ">
+        © 2026 Phena School Management System
+    </p>
+
+</div>
+
+
+</body>
+</html>
+""".trimIndent()
+
     }
 
     private fun escapeHtml(value: String): String {

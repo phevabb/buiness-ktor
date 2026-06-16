@@ -2,6 +2,7 @@ package com.example.account.repo
 
 
 
+
 import com.example.account.dto.AccountResponse
 import com.example.account.dto.CreateAccountRequest
 import com.example.account.dto.UpdateAccountRequest
@@ -28,10 +29,55 @@ object AccountsRepository {
         val emailVerificationToken: String
     )
 
-//    private fun Transaction.setTenantSchema(tenantSchema: String) {
-//        val safeSchema = tenantSchema.replace("\"", "\"\"")
-//        exec("""SET LOCAL search_path TO "$safeSchema"""")
-//    }
+
+
+    fun findByEmail(email: String): AccountLoginData? {
+        return transaction {
+            AccountsTable
+                .selectAll()
+                .where {
+                    AccountsTable.email eq email.trim().lowercase()
+                }
+                .limit(1)
+                .map { row ->
+                    AccountLoginData(
+                        id = row[AccountsTable.id].value,
+                        email = row[AccountsTable.email],
+                        passwordHash = row[AccountsTable.passwordHash],
+
+                        schoolName = row[AccountsTable.schoolName],
+                        fullName = row[AccountsTable.fullName],
+                        phoneNumber = row[AccountsTable.phoneNumber],
+                        location = row[AccountsTable.location],
+
+                        tenantCode = row[AccountsTable.tenantCode],
+                        academicYear = row[AccountsTable.academicYear],
+                        estimatedStudents = row[AccountsTable.estimatedStudents],
+                        subscriptionAmountPerTermPesewas = row[AccountsTable.subscriptionAmountPerTermPesewas],
+
+                        isActive = row[AccountsTable.isActive],
+                        isStaff = row[AccountsTable.isStaff],
+                        isEmailVerified = row[AccountsTable.isEmailVerified],
+                        profilePictureUrl = row[AccountsTable.profilePictureUrl],
+
+                        tenantProvisioned = row[AccountsTable.tenantProvisioned],
+                        tenantProvisionError = row[AccountsTable.tenantProvisionError],
+                        tenantProvisionedAtEpochMillis = row[AccountsTable.tenantProvisionedAtEpochMillis],
+
+                        tenantId = row[AccountsTable.tenantId],
+                        tenantSchema = row[AccountsTable.tenantSchema],
+                        tenantSlug = row[AccountsTable.tenantSlug],
+                        defaultDomain = row[AccountsTable.defaultDomain],
+                        tenantStatus = row[AccountsTable.tenantStatus],
+
+                        principalLoginUserId = row[AccountsTable.principalLoginUserId],
+                        principalPin = row[AccountsTable.principalPin]
+                    )
+                }
+                .singleOrNull()
+        }
+    }
+
 
     fun findById(
         id: Int
@@ -489,4 +535,42 @@ object AccountsRepository {
 
         return "$prefix-$suffix"
     }
+
+
+    data class AccountLoginData(
+        val id: Int,
+        val email: String,
+        val passwordHash: String,
+
+        val schoolName: String,
+        val fullName: String,
+        val phoneNumber: String,
+        val location: String,
+
+        val tenantCode: String,
+        val academicYear: String,
+        val estimatedStudents: Int,
+        val subscriptionAmountPerTermPesewas: Long,
+
+        val isActive: Boolean,
+        val isStaff: Boolean,
+        val isEmailVerified: Boolean,
+        val profilePictureUrl: String?,
+
+        val tenantProvisioned: Boolean,
+        val tenantProvisionError: String?,
+        val tenantProvisionedAtEpochMillis: Long?,
+
+        val tenantId: Int?,
+        val tenantSchema: String?,
+        val tenantSlug: String?,
+        val defaultDomain: String?,
+        val tenantStatus: String?,
+
+        val principalLoginUserId: String?,
+        val principalPin: String?
+    )
 }
+
+
+

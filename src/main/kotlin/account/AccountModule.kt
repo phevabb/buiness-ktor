@@ -3,6 +3,7 @@ package account
 
 
 
+import auth.authRoutes
 import com.example.account.routes.accountRoutes
 
 import com.example.account.service.BcryptPasswordHasher
@@ -18,6 +19,12 @@ fun Application.accountModule() {
             route("/accounts") {
                 accountRoutes()
             }
+
+            route("/auth") {
+                authRoutes()
+            }
+
+
         }
     }
 }
