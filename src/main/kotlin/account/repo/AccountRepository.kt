@@ -71,7 +71,9 @@ object AccountsRepository {
                         tenantStatus = row[AccountsTable.tenantStatus],
 
                         principalLoginUserId = row[AccountsTable.principalLoginUserId],
-                        principalPin = row[AccountsTable.principalPin]
+                        principalPin = row[AccountsTable.principalPin],
+                        defaultLocalDomain = row[AccountsTable.defaultLocalDomain],
+                        fallbackLocalUrl = row[AccountsTable.fallbackLocalUrl],
                     )
                 }
                 .singleOrNull()
@@ -350,6 +352,55 @@ object AccountsRepository {
             ?.toResponse()
     }
 
+    fun findByTenantCode(tenantCode: String): AccountLoginData? {
+        return transaction {
+            AccountsTable
+                .selectAll()
+                .where {
+                    AccountsTable.tenantCode eq tenantCode.trim()
+                }
+                .limit(1)
+                .map { row ->
+                    AccountLoginData(
+                        id = row[AccountsTable.id].value,
+                        email = row[AccountsTable.email],
+                        passwordHash = row[AccountsTable.passwordHash],
+
+                        schoolName = row[AccountsTable.schoolName],
+                        fullName = row[AccountsTable.fullName],
+                        phoneNumber = row[AccountsTable.phoneNumber],
+                        location = row[AccountsTable.location],
+
+                        tenantCode = row[AccountsTable.tenantCode],
+                        academicYear = row[AccountsTable.academicYear],
+                        estimatedStudents = row[AccountsTable.estimatedStudents],
+                        subscriptionAmountPerTermPesewas = row[AccountsTable.subscriptionAmountPerTermPesewas],
+
+                        isActive = row[AccountsTable.isActive],
+                        isStaff = row[AccountsTable.isStaff],
+                        isEmailVerified = row[AccountsTable.isEmailVerified],
+                        profilePictureUrl = row[AccountsTable.profilePictureUrl],
+
+                        tenantProvisioned = row[AccountsTable.tenantProvisioned],
+                        tenantProvisionError = row[AccountsTable.tenantProvisionError],
+                        tenantProvisionedAtEpochMillis = row[AccountsTable.tenantProvisionedAtEpochMillis],
+
+                        tenantId = row[AccountsTable.tenantId],
+                        tenantSchema = row[AccountsTable.tenantSchema],
+                        tenantSlug = row[AccountsTable.tenantSlug],
+                        defaultDomain = row[AccountsTable.defaultDomain],
+                        tenantStatus = row[AccountsTable.tenantStatus],
+
+                        principalLoginUserId = row[AccountsTable.principalLoginUserId],
+                        principalPin = row[AccountsTable.principalPin],
+                        defaultLocalDomain = row[AccountsTable.defaultLocalDomain],
+                        fallbackLocalUrl = row[AccountsTable.fallbackLocalUrl],
+                    )
+                }
+                .singleOrNull()
+        }
+    }
+
 
 
     fun saveTenantProvisioningSuccess(
@@ -366,6 +417,10 @@ object AccountsRepository {
             it[tenantSchema] = tenantResponse.tenantSchema
             it[tenantSlug] = tenantResponse.tenantSlug
             it[defaultDomain] = tenantResponse.defaultDomain
+            it[defaultLocalDomain] = tenantResponse.defaultLocalDomain
+            it[fallbackLocalUrl] = tenantResponse.fallbackLocalUrl
+
+
             it[tenantStatus] = tenantResponse.status
 
             it[principalLoginUserId] = tenantResponse.principalLoginUserId
@@ -564,8 +619,14 @@ object AccountsRepository {
         val tenantId: Int?,
         val tenantSchema: String?,
         val tenantSlug: String?,
+
+
         val defaultDomain: String?,
-        val tenantStatus: String?,
+        val defaultLocalDomain: String?,
+        val fallbackLocalUrl:String?,
+
+
+    val tenantStatus: String?,
 
         val principalLoginUserId: String?,
         val principalPin: String?

@@ -13,8 +13,8 @@ import plugins.configureAuth
 fun Application.module() {
     DatabaseFactory.init(*AppTables.all)
 
-    configureAuth()
-    configureSecurity()
+//    configureAuth()
+   configureSecurity()
     configureSerialization()
     configureCors()
     accountModule()

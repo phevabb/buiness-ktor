@@ -46,6 +46,11 @@ object AccountsTable : IntIdTable("accounts") {
     val tenantSchema = varchar("tenant_schema", 150).nullable()
     val tenantSlug = varchar("tenant_slug", 150).nullable()
     val defaultDomain = varchar("default_domain", 255).nullable()
+    val defaultLocalDomain = varchar("default_local_domain", 255).nullable()
+    val fallbackLocalUrl = varchar("fallback_local_url", 255).nullable()
+
+
+
     val tenantStatus = varchar("tenant_status", 50).nullable()
 
     val principalLoginUserId = varchar("principal_login_user_id", 100).nullable()

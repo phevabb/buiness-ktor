@@ -91,6 +91,9 @@ data class CreateTenantResponse(
     val tenantSchema: String,
     val tenantSlug: String,
     val defaultDomain: String,
+
+    val defaultLocalDomain: String,
+    val fallbackLocalUrl: String,
     val status: String,
     val message: String,
     val principalLoginUserId: String,

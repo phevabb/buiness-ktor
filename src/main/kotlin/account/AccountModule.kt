@@ -5,6 +5,7 @@ package account
 
 import auth.authRoutes
 import com.example.account.routes.accountRoutes
+import com.example.account.routes.dashboardRoutes
 
 import com.example.account.service.BcryptPasswordHasher
 import io.ktor.server.application.Application
@@ -22,6 +23,10 @@ fun Application.accountModule() {
 
             route("/auth") {
                 authRoutes()
+            }
+
+            route("/dashboard") {
+                dashboardRoutes()
             }
 
 

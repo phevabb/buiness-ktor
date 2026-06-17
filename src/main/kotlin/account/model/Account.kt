@@ -25,6 +25,8 @@ data class Account(
     val tenantSchema: String?,
     val tenantSlug: String?,
     val defaultDomain: String?,
+    val defaultLocalDomain: String?,
+    val fallbackLocalUrl: String?,
     val tenantStatus: String?,
 
     val principalLoginUserId: String?,

@@ -423,14 +423,13 @@ private fun buildVerificationPartialSuccessPage(
                 <h1>Email verified successfully.</h1>
 
                 <p>
-                    Your email for <strong>${escapeHtml(schoolName)}</strong> has been verified,
-                    but your school workspace could not be fully created at this moment.
+                    Your email for <strong>${escapeHtml(schoolName)}</strong> has been verified. Proceed to login.
                 </p>
 
-                <p>
-                    Please contact <a href="mailto:${escapeHtml(supportEmail)}">${escapeHtml(supportEmail)}</a>
-                    or try again later.
-                </p>
+//                <p>
+//                    Please contact <a href="mailto:${escapeHtml(supportEmail)}">${escapeHtml(supportEmail)}</a>
+//                    or try again later.
+//                </p>
             </main>
         </body>
         </html>

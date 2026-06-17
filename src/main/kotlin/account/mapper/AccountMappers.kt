@@ -34,7 +34,9 @@ fun ResultRow.toAccount(): Account =
         tenantStatus = this[AccountsTable.tenantStatus],
 
         principalLoginUserId = this[AccountsTable.principalLoginUserId],
-        principalPin = this[AccountsTable.principalPin]
+        principalPin = this[AccountsTable.principalPin],
+        defaultLocalDomain = this[AccountsTable.defaultDomain],
+        fallbackLocalUrl = this[AccountsTable.fallbackLocalUrl],
     )
 
 fun Account.toResponse(): AccountResponse =
@@ -67,5 +69,7 @@ fun Account.toResponse(): AccountResponse =
         tenantStatus = tenantStatus,
 
         principalLoginUserId = principalLoginUserId,
-        principalPin = principalPin
+        principalPin = principalPin,
+        defaultLocalDomain = defaultLocalDomain,
+        fallbackLocalUrl = fallbackLocalUrl,
     )

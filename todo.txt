@@ -1,2 +1,5 @@
 change the ui of the email content sent
 make sure to update the login url in accounts routes for prod.
+
+ defaultLocalDomain
+        fallbackLocalUrl
