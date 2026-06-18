@@ -95,6 +95,7 @@ fun Route.accountRoutes() {
                 val tenantResponse =
                     TenantProvisioningService.createTenantForAccount(account)
 
+
                 val updatedAccount =
                     AccountsRepository.saveTenantProvisioningSuccess(
                         accountId = account.id,
@@ -109,7 +110,8 @@ fun Route.accountRoutes() {
                         defaultDomain = updatedAccount.defaultDomain ?: "",
                         principalLoginUserId = updatedAccount.principalLoginUserId ?: "",
                         principalPin = updatedAccount.principalPin ?: "",
-                        loginUrl = "http://localhost:5173/auth/login"
+//                        loginUrl = "http://localhost:5173/auth/login"
+                        loginUrl = "https://kogschool.com/auth/login"
                     ),
                     contentType = ContentType.Text.Html,
                     status = HttpStatusCode.OK
