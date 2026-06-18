@@ -14,19 +14,31 @@ object DatabaseFactory {
     fun init(vararg tables: Table) {
         if (::database.isInitialized) return
 
-        val hikariConfig = HikariConfig().apply {
-            jdbcUrl = "jdbc:postgresql://localhost:5432/ktor_business"
-            username = "postgres"
-            password = "postgres"
-            driverClassName = "org.postgresql.Driver"
+//        val hikariConfig = HikariConfig().apply {
+//            jdbcUrl = "jdbc:postgresql://localhost:5432/ktor_business"
+//            username = "postgres"
+//            password = "postgres"
+//            driverClassName = "org.postgresql.Driver"
+//            maximumPoolSize = 10
+//            minimumIdle = 2
+//            isAutoCommit = false
+//            transactionIsolation = "TRANSACTION_REPEATABLE_READ"
+//            validate()
+//        } // for local
 
+
+        val hikariConfig = HikariConfig().apply {
+            jdbcUrl = "jdbc:postgresql://ep-delicate-salad-ab2s96d9-pooler.eu-west-2.aws.neon.tech:5432/neondb?sslmode=require"
+            username = "neondb_owner"
+            password = "npg_wZR98SylkFiQ"
+            driverClassName = "org.postgresql.Driver"
             maximumPoolSize = 10
             minimumIdle = 2
             isAutoCommit = false
             transactionIsolation = "TRANSACTION_REPEATABLE_READ"
-
             validate()
-        }
+        } // NEEEOOON
+
 
         val dataSource = HikariDataSource(hikariConfig)
         database = Database.connect(dataSource)
