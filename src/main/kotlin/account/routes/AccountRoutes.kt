@@ -426,10 +426,7 @@ private fun buildVerificationPartialSuccessPage(
                     Your email for <strong>${escapeHtml(schoolName)}</strong> has been verified. Proceed to login.
                 </p>
 
-//                <p>
-//                    Please contact <a href="mailto:${escapeHtml(supportEmail)}">${escapeHtml(supportEmail)}</a>
-//                    or try again later.
-//                </p>
+
             </main>
         </body>
         </html>
