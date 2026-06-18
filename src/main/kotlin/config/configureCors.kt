@@ -39,7 +39,7 @@ fun Application.configureCors() {
         // Cache preflight response
         maxAgeInSeconds = 3600
 
-        // Do NOT use anyHost() here since you already allow explicit hosts
+
         anyHost()
     }
 }
