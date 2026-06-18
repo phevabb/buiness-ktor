@@ -68,7 +68,7 @@ object AppConfig {
 
     // Tenant Ktor URL
     val tenantApiBaseUrl: String
-        get() = "https://kogschool.com/enterprise/api"
+        get() = "https://kogschool.com/enterprise"
 
     val tenantInternalApiKey: String
         get() = "change-this-secret-key"
