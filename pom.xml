@@ -8,11 +8,14 @@
     <artifactId>ktor-business</artifactId>
     <version>0.0.1</version>
     <name>ktor-business</name>
+
     <properties>
         <kotlin.code.style>official</kotlin.code.style>
+
         <exposed_version>1.3.0</exposed_version>
         <h2_version>2.4.240</h2_version>
         <kotlin_version>2.3.21</kotlin_version>
+        <main.class>com.example.MainKt</main.class>
         <logback_version>1.5.34</logback_version>
         <postgresql_version>42.7.11</postgresql_version>
         <ktor_version>3.5.0</ktor_version>
@@ -322,4 +325,7 @@
             </plugin>
         </plugins>
     </build>
+
+
+
 </project>
