@@ -14,7 +14,7 @@ import io.github.cdimascio.dotenv.dotenv
 //
 //    // Tenant Ktor URL
 //    val tenantApiBaseUrl: String
-//        get() = "http://127.0.0.1:8080"
+//        get() = "http://127.0.0.1:9001"
 //
 //    val tenantInternalApiKey: String
 //        get() = "change-this-secret-key"
@@ -58,7 +58,7 @@ import io.github.cdimascio.dotenv.dotenv
 //    val emailDebug: Boolean
 //        get() = true
 //}
-
+//
 
 object AppConfig {
 
@@ -84,12 +84,6 @@ object AppConfig {
     val smtpUsername: String
         get() = "phevab1@gmail.com"
 
-    /*
-     * IMPORTANT:
-     * Use a NEW Google App Password here.
-     * Do not use your normal Gmail password.
-     * Do not include spaces.
-     */
     val smtpPassword: String
         get() = "asxkumlgijtpucya"
 

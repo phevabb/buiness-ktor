@@ -30,6 +30,11 @@ object TenantProvisioningService {
         }
     }
 
+    private val json = Json {
+        ignoreUnknownKeys = true
+        isLenient = true
+    }
+
     suspend fun createTenantForAccount(
         account: AccountResponse
     ): CreateTenantResponse {
@@ -63,10 +68,7 @@ object TenantProvisioningService {
             )
         }
 
-        return Json {
-            ignoreUnknownKeys = true
-            isLenient = true
-        }.decodeFromString<CreateTenantResponse>(bodyText)
+        return json.decodeFromString<CreateTenantResponse>(bodyText)
     }
 }
 

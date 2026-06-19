@@ -24,6 +24,8 @@ import com.example.config.AppConfig
 import io.ktor.http.ContentType
 
 import io.ktor.http.HttpStatusCode
+import io.ktor.server.request.path
+import io.ktor.server.request.uri
 import io.ktor.server.response.respondText
 
 import io.ktor.server.routing.Route
@@ -75,9 +77,24 @@ fun Route.accountRoutes() {
 
     get("/verify-email") {
         try {
+            println("====================================================")
+            println("➡️  [VERIFY-EMAIL] Incoming request")
+            println("➡️  [VERIFY-EMAIL] URI: ${call.request.uri}")
+            println("➡️  [VERIFY-EMAIL] PATH: ${call.request.path()}")
+            println("➡️  [VERIFY-EMAIL] HOST: ${call.request.local.serverHost}")
+            println("➡️  [VERIFY-EMAIL] PORT: ${call.request.local.serverPort}")
+            println("➡️  [VERIFY-EMAIL] QUERY PARAMS: ${call.request.queryParameters.entries()}")
+            println("====================================================")
+
             val token = call.request.queryParameters["token"]
 
+            println("🔎 [VERIFY-EMAIL] token present? ${!token.isNullOrBlank()}")
+            println("🔎 [VERIFY-EMAIL] token value: $token")
+
             if (token.isNullOrBlank()) {
+                println("❌ [VERIFY-EMAIL] Token is missing or blank")
+                println("📤 [VERIFY-EMAIL] Responding with 400 BadRequest")
+
                 call.respondText(
                     text = buildVerificationErrorPage(
                         title = "Verification link missing",
@@ -89,18 +106,64 @@ fun Route.accountRoutes() {
                 return@get
             }
 
+            println("✅ [VERIFY-EMAIL] Token received, calling AccountsRepository.verifyEmail(token)")
             val account = AccountsRepository.verifyEmail(token)
 
+            println("✅ [VERIFY-EMAIL] AccountsRepository.verifyEmail(token) succeeded")
+            println("👤 [VERIFY-EMAIL] account.id = ${account.id}")
+            println("👤 [VERIFY-EMAIL] account.schoolName = ${account.schoolName}")
+
+            println("👤 [VERIFY-EMAIL] account.tenantCode = ${account.tenantCode}")
+            println("👤 [VERIFY-EMAIL] account.tenantSchema = ${account.tenantSchema}")
+            println("👤 [VERIFY-EMAIL] account.defaultDomain = ${account.defaultDomain}")
+
             try {
+                println("====================================================")
+                println("🏗️  [VERIFY-EMAIL] Starting tenant provisioning...")
+                println("🏗️  [VERIFY-EMAIL] Calling TenantProvisioningService.createTenantForAccount(account)")
+                println("====================================================")
+
                 val tenantResponse =
                     TenantProvisioningService.createTenantForAccount(account)
 
+                println("✅ [VERIFY-EMAIL] TenantProvisioningService.createTenantForAccount(account) succeeded")
+                println("🏷️  [VERIFY-EMAIL] tenantResponse.tenantId = ${tenantResponse.tenantId}")
+                println("🏷️  [VERIFY-EMAIL] tenantResponse.schoolName = ${tenantResponse.schoolName}")
+                println("🏷️  [VERIFY-EMAIL] tenantResponse.tenantCode = ${tenantResponse.tenantCode}")
+                println("🏷️  [VERIFY-EMAIL] tenantResponse.tenantSchema = ${tenantResponse.tenantSchema}")
+                println("🏷️  [VERIFY-EMAIL] tenantResponse.tenantSlug = ${tenantResponse.tenantSlug}")
+                println("🏷️  [VERIFY-EMAIL] tenantResponse.defaultDomain = ${tenantResponse.defaultDomain}")
+                println("🏷️  [VERIFY-EMAIL] tenantResponse.defaultLocalDomain = ${tenantResponse.defaultLocalDomain}")
+                println("🏷️  [VERIFY-EMAIL] tenantResponse.fallbackLocalUrl = ${tenantResponse.fallbackLocalUrl}")
+                println("🏷️  [VERIFY-EMAIL] tenantResponse.status = ${tenantResponse.status}")
+                println("🏷️  [VERIFY-EMAIL] tenantResponse.principalLoginUserId = ${tenantResponse.principalLoginUserId}")
+                println("🏷️  [VERIFY-EMAIL] tenantResponse.principalPin = ${tenantResponse.principalPin}")
+
+                println("====================================================")
+                println("💾 [VERIFY-EMAIL] Saving tenant provisioning success...")
+                println("💾 [VERIFY-EMAIL] Calling AccountsRepository.saveTenantProvisioningSuccess(...)")
+                println("====================================================")
 
                 val updatedAccount =
                     AccountsRepository.saveTenantProvisioningSuccess(
                         accountId = account.id,
                         tenantResponse = tenantResponse
                     )
+
+                println("✅ [VERIFY-EMAIL] AccountsRepository.saveTenantProvisioningSuccess(...) succeeded")
+                println("🧾 [VERIFY-EMAIL] updatedAccount.id = ${updatedAccount.id}")
+                println("🧾 [VERIFY-EMAIL] updatedAccount.schoolName = ${updatedAccount.schoolName}")
+                println("🧾 [VERIFY-EMAIL] updatedAccount.tenantCode = ${updatedAccount.tenantCode}")
+                println("🧾 [VERIFY-EMAIL] updatedAccount.tenantSchema = ${updatedAccount.tenantSchema}")
+                println("🧾 [VERIFY-EMAIL] updatedAccount.defaultDomain = ${updatedAccount.defaultDomain}")
+                println("🧾 [VERIFY-EMAIL] updatedAccount.principalLoginUserId = ${updatedAccount.principalLoginUserId}")
+                println("🧾 [VERIFY-EMAIL] updatedAccount.principalPin = ${updatedAccount.principalPin}")
+
+                // val loginUrl = "http://localhost:5173/auth/login"
+                 val loginUrl = "https://business-vue-sms.vercel.app/auth/login"
+
+                println("🌐 [VERIFY-EMAIL] loginUrl = $loginUrl")
+                println("📤 [VERIFY-EMAIL] Responding with 200 OK verification success page")
 
                 call.respondText(
                     text = buildVerificationSuccessPage(
@@ -110,19 +173,39 @@ fun Route.accountRoutes() {
                         defaultDomain = updatedAccount.defaultDomain ?: "",
                         principalLoginUserId = updatedAccount.principalLoginUserId ?: "",
                         principalPin = updatedAccount.principalPin ?: "",
-//                        loginUrl = "http://localhost:5173/auth/login"
-                        loginUrl = "https://kogschool.com/auth/login"
+                        loginUrl = loginUrl
                     ),
                     contentType = ContentType.Text.Html,
                     status = HttpStatusCode.OK
                 )
-            } catch (tenantError: Exception) {
-                tenantError.printStackTrace()
 
-                AccountsRepository.saveTenantProvisioningFailure(
-                    accountId = account.id,
-                    errorMessage = tenantError.message ?: "Tenant creation failed."
-                )
+                println("✅ [VERIFY-EMAIL] Success page sent successfully")
+
+            } catch (tenantError: Exception) {
+                println("====================================================")
+                println("🔥 [VERIFY-EMAIL] Tenant provisioning failed")
+                println("🔥 [VERIFY-EMAIL] tenantError.message = ${tenantError.message}")
+                println("🔥 [VERIFY-EMAIL] tenantError class = ${tenantError::class.qualifiedName}")
+                println("🔥 [VERIFY-EMAIL] Full stack trace below:")
+                tenantError.printStackTrace()
+                println("====================================================")
+
+                try {
+                    println("💾 [VERIFY-EMAIL] Saving tenant provisioning failure...")
+                    AccountsRepository.saveTenantProvisioningFailure(
+                        accountId = account.id,
+                        errorMessage = tenantError.message ?: "Tenant creation failed."
+                    )
+                    println("✅ [VERIFY-EMAIL] Tenant provisioning failure saved successfully")
+                } catch (saveFailureError: Exception) {
+                    println("🔥 [VERIFY-EMAIL] Failed to save tenant provisioning failure")
+                    println("🔥 [VERIFY-EMAIL] saveFailureError.message = ${saveFailureError.message}")
+                    println("🔥 [VERIFY-EMAIL] saveFailureError class = ${saveFailureError::class.qualifiedName}")
+                    println("🔥 [VERIFY-EMAIL] Full stack trace below:")
+                    saveFailureError.printStackTrace()
+                }
+
+                println("📤 [VERIFY-EMAIL] Responding with 502 BadGateway partial success page")
 
                 call.respondText(
                     text = buildVerificationPartialSuccessPage(
@@ -132,8 +215,21 @@ fun Route.accountRoutes() {
                     contentType = ContentType.Text.Html,
                     status = HttpStatusCode.BadGateway
                 )
+
+                println("⚠️ [VERIFY-EMAIL] Partial success page sent")
             }
+
         } catch (e: IllegalArgumentException) {
+            println("====================================================")
+            println("❌ [VERIFY-EMAIL] IllegalArgumentException caught")
+            println("❌ [VERIFY-EMAIL] message = ${e.message}")
+            println("❌ [VERIFY-EMAIL] class = ${e::class.qualifiedName}")
+            println("❌ [VERIFY-EMAIL] Full stack trace below:")
+            e.printStackTrace()
+            println("====================================================")
+
+            println("📤 [VERIFY-EMAIL] Responding with 400 BadRequest verification error page")
+
             call.respondText(
                 text = buildVerificationErrorPage(
                     title = "Verification failed",
@@ -142,8 +238,19 @@ fun Route.accountRoutes() {
                 contentType = ContentType.Text.Html,
                 status = HttpStatusCode.BadRequest
             )
+
+            println("⚠️ [VERIFY-EMAIL] Verification failed page sent")
+
         } catch (e: Exception) {
+            println("====================================================")
+            println("🔥 [VERIFY-EMAIL] Unexpected exception caught")
+            println("🔥 [VERIFY-EMAIL] message = ${e.message}")
+            println("🔥 [VERIFY-EMAIL] class = ${e::class.qualifiedName}")
+            println("🔥 [VERIFY-EMAIL] Full stack trace below:")
             e.printStackTrace()
+            println("====================================================")
+
+            println("📤 [VERIFY-EMAIL] Responding with 500 InternalServerError")
 
             call.respondText(
                 text = buildVerificationErrorPage(
@@ -153,9 +260,10 @@ fun Route.accountRoutes() {
                 contentType = ContentType.Text.Html,
                 status = HttpStatusCode.InternalServerError
             )
+
+            println("🔥 [VERIFY-EMAIL] Internal server error page sent")
         }
     }
-
 
     // create tenant here
 

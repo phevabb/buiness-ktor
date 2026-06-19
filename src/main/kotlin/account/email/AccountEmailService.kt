@@ -104,7 +104,7 @@ object AccountEmailService {
 <html>
 <body style="margin:0;padding:0;background:#eef6ff;font-family:'Segoe UI',Arial,sans-serif;">
 
-```
+
 <div style="max-width:680px;margin:0 auto;padding:40px 20px;">
 
     <!-- Card -->

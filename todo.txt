@@ -3,3 +3,10 @@ make sure to update the login url in accounts routes for prod.
 
  defaultLocalDomain
         fallbackLocalUrl
+
+
+links to change
+-----------------
+appConfig.kt    in config
+accountRoutes   in account/routes  162
+DatabaseFactory in config
