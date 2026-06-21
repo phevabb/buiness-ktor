@@ -12,6 +12,7 @@ import io.ktor.server.application.Application
 
 import com.example.superadmin.client.TenantSuperAdminClient
 import com.example.superadmin.routes.billingRoutes
+import com.example.superadmin.routes.superAdminBillingRoutes
 import com.example.superadmin.services.PaymentService
 
 import io.ktor.client.HttpClient
@@ -66,6 +67,7 @@ fun Application.module() {
 
     routing {
         billingRoutes(paymentService)
+        superAdminBillingRoutes()
     }
 
 
