@@ -11,6 +11,8 @@ import com.example.account.mapper.toResponse
 import com.example.account.security.AccountSecurity
 import com.example.account.service.CreateTenantResponse
 import com.example.account.table.AccountsTable
+import com.example.superadmin.superAdminAccountDtos.SuperAdminAccountResponse
+import org.jetbrains.exposed.v1.core.SortOrder
 import org.jetbrains.exposed.v1.core.eq
 
 import org.jetbrains.exposed.v1.jdbc.insertAndGetId
@@ -458,6 +460,88 @@ object AccountsRepository {
             ?: error("Account not found after saving tenant provisioning failure.")
     }
 
+
+    fun findAllForSuperAdmin(
+        search: String?,
+        status: String?
+    ): List<SuperAdminAccountResponse> = transaction {
+        val accounts = AccountsTable
+            .selectAll()
+            .orderBy(AccountsTable.createdAtEpochMillis, SortOrder.DESC)
+            .map { row ->
+                SuperAdminAccountResponse(
+                    id = row[AccountsTable.id].value,
+                    email = row[AccountsTable.email],
+                    schoolName = row[AccountsTable.schoolName],
+                    fullName = row[AccountsTable.fullName],
+                    phoneNumber = row[AccountsTable.phoneNumber],
+                    location = row[AccountsTable.location],
+                    tenantCode = row[AccountsTable.tenantCode],
+                    academicYear = row[AccountsTable.academicYear],
+                    estimatedStudents = row[AccountsTable.estimatedStudents],
+                    subscriptionAmountPerTermPesewas = row[AccountsTable.subscriptionAmountPerTermPesewas],
+                    isActive = row[AccountsTable.isActive],
+                    isStaff = row[AccountsTable.isStaff],
+                    isEmailVerified = row[AccountsTable.isEmailVerified],
+                    profilePictureUrl = row[AccountsTable.profilePictureUrl],
+                    createdAtEpochMillis = row[AccountsTable.createdAtEpochMillis],
+
+                    tenantProvisioned = row[AccountsTable.tenantProvisioned],
+                    tenantProvisionError = row[AccountsTable.tenantProvisionError],
+                    tenantProvisionedAtEpochMillis = row[AccountsTable.tenantProvisionedAtEpochMillis],
+
+                    tenantId = row[AccountsTable.tenantId],
+                    tenantSchema = row[AccountsTable.tenantSchema],
+                    tenantSlug = row[AccountsTable.tenantSlug],
+                    defaultDomain = row[AccountsTable.defaultDomain],
+                    defaultLocalDomain = row[AccountsTable.defaultLocalDomain],
+                    fallbackLocalUrl = row[AccountsTable.fallbackLocalUrl],
+                    tenantStatus = row[AccountsTable.tenantStatus],
+
+                    principalLoginUserId = row[AccountsTable.principalLoginUserId]
+                )
+            }
+
+        val filteredByStatus = when (status?.lowercase()?.trim()) {
+            "active" -> accounts.filter { it.isActive }
+            "inactive" -> accounts.filter { !it.isActive }
+            "verified" -> accounts.filter { it.isEmailVerified }
+            "unverified" -> accounts.filter { !it.isEmailVerified }
+            "provisioned" -> accounts.filter { it.tenantProvisioned }
+            "not_provisioned" -> accounts.filter { !it.tenantProvisioned }
+            "failed_provisioning" -> accounts.filter { !it.tenantProvisionError.isNullOrBlank() }
+            else -> accounts
+        }
+
+        val normalizedSearch = search?.trim()?.lowercase()
+
+        if (normalizedSearch.isNullOrBlank()) {
+            filteredByStatus
+        } else {
+            filteredByStatus.filter { account ->
+                listOfNotNull(
+                    account.schoolName,
+                    account.fullName,
+                    account.email,
+                    account.phoneNumber,
+                    account.location,
+                    account.tenantCode,
+                    account.tenantSchema,
+                    account.tenantSlug,
+                    account.defaultDomain,
+                    account.defaultLocalDomain,
+                    account.tenantStatus,
+                    account.academicYear
+                )
+                    .joinToString(" ")
+                    .lowercase()
+                    .contains(normalizedSearch)
+            }
+        }
+    }
+
+
+
     private fun validateCreateRequest(
         req: CreateAccountRequest
     ) {
@@ -632,6 +716,13 @@ object AccountsRepository {
         val principalPin: String?
     )
 }
+
+
+
+
+
+
+
 
 
 

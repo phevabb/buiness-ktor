@@ -23,6 +23,18 @@
 
     <dependencies>
 
+
+            <!-- Ktor Client Core -->
+
+
+
+            <!-- Ktor Client Content Negotiation -->
+
+
+            <!-- Kotlinx JSON Serialization for Ktor -->
+
+
+
         <dependency>
             <groupId>org.jetbrains.kotlin</groupId>
             <artifactId>kotlin-stdlib</artifactId>
