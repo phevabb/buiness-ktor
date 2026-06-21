@@ -6,15 +6,19 @@ import com.example.config.DatabaseFactory
 import config.AppTables
 
 import com.example.config.configureCors
+import com.example.superadmin.client.PaystackClient
 
 import io.ktor.server.application.Application
 
 import com.example.superadmin.client.TenantSuperAdminClient
+import com.example.superadmin.routes.billingRoutes
+import com.example.superadmin.services.PaymentService
 
 import io.ktor.client.HttpClient
 import io.ktor.client.engine.cio.CIO
 import io.ktor.client.plugins.contentnegotiation.ContentNegotiation as ClientContentNegotiation
 import io.ktor.serialization.kotlinx.json.json
+import io.ktor.server.routing.routing
 import kotlinx.serialization.json.Json
 
 
@@ -40,6 +44,16 @@ val tenantSuperAdminClient = TenantSuperAdminClient(
 //    internalApiKey = System.getenv("INTERNAL_API_KEY") ?: "change-this-to-a-long-random-secret"
 )
 
+val paystackClient = PaystackClient(
+    httpClient = tenantHttpClient,
+    secretKey = System.getenv("PAYSTACK_SECRET_KEY") ?: "sk_test_your_key_here"
+)
+
+val paymentService = PaymentService(
+    paystackClient = paystackClient,
+    callbackBaseUrl = System.getenv("BUSINESS_FRONTEND_URL") ?: "http://localhost:3000"
+)
+
 fun Application.module() {
     DatabaseFactory.init(*AppTables.all)
 
@@ -48,6 +62,12 @@ fun Application.module() {
     configureSerialization()
     configureCors()
     accountModule()
+
+
+    routing {
+        billingRoutes(paymentService)
+    }
+
 
 
 

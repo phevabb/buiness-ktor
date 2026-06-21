@@ -10,4 +10,4 @@ links to change
 appConfig.kt    in config
 accountRoutes   in account/routes  162
 DatabaseFactory in config
-Application.kt  in kotlin/application.kt    37
+Application.kt  in kotlin/application.kt    37 and 52
