@@ -2,6 +2,8 @@ package com.example.account.service
 
 import com.example.account.dto.AccountResponse
 import com.example.config.AppConfig
+import com.example.superadmin.dto.TenantAcademicCalendarSeed
+import com.example.superadmin.repos.BillingRepository
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
 import io.ktor.client.engine.cio.CIO
@@ -15,6 +17,8 @@ import io.ktor.http.contentType
 import io.ktor.serialization.kotlinx.json.json
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
+
+
 
 object TenantProvisioningService {
 
@@ -38,6 +42,11 @@ object TenantProvisioningService {
     suspend fun createTenantForAccount(
         account: AccountResponse
     ): CreateTenantResponse {
+        val serverNow = System.currentTimeMillis()
+
+        val academicCalendar = BillingRepository.findAcademicCalendarForDate(serverNow)
+            ?: error("No active academic year/term found for current server time.")
+
         val request = CreateTenantRequest(
             schoolName = account.schoolName,
             tenantCode = account.tenantCode,
@@ -47,7 +56,8 @@ object TenantProvisioningService {
             accountOwnerName = account.fullName,
             primaryDomain = "",
             academicYear = account.academicYear,
-            features = emptyList()
+            features = emptyList(),
+            academicCalendar = academicCalendar
         )
 
         val response = client.post("${AppConfig.tenantApiBaseUrl}/internal/tenants/create") {
@@ -82,7 +92,8 @@ data class CreateTenantRequest(
     val accountOwnerName: String,
     val primaryDomain: String,
     val academicYear: String,
-    val features: List<String>
+    val features: List<String>,
+    val academicCalendar: TenantAcademicCalendarSeed
 )
 
 @Serializable
@@ -93,11 +104,12 @@ data class CreateTenantResponse(
     val tenantSchema: String,
     val tenantSlug: String,
     val defaultDomain: String,
-
     val defaultLocalDomain: String,
     val fallbackLocalUrl: String,
     val status: String,
     val message: String,
     val principalLoginUserId: String,
-    val principalPin: String
+    val principalPin: String,
+    val adminLoginUserId: String,
+    val adminPin: String
 )

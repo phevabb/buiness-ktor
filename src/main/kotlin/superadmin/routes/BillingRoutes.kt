@@ -37,6 +37,29 @@ fun Route.billingRoutes(
 ) {
     route("/api/billing") {
 
+
+        get("/invoices") {
+            val accountId = call.request.queryParameters["accountId"]?.toIntOrNull()
+            val tenantCode = call.request.queryParameters["tenantCode"]
+
+            if (accountId == null && tenantCode.isNullOrBlank()) {
+                call.respond(
+                    HttpStatusCode.BadRequest,
+                    SimpleMessageResponse("accountId or tenantCode is required")
+                )
+                return@get
+            }
+
+            val invoices = BillingRepository.findInvoices(
+                accountId = accountId,
+                tenantCode = tenantCode
+            )
+
+            call.respond(HttpStatusCode.OK, invoices)
+        }
+
+
+
         post("/academic-years") {
             val request = call.receive<CreateAcademicYearRequest>()
 

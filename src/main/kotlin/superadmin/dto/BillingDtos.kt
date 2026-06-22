@@ -177,3 +177,58 @@ data class DeleteAcademicYearResponse(
     val message: String,
     val academicYearId: Int
 )
+
+
+
+@Serializable
+data class InvoiceResponse(
+    val invoiceId: Int,
+    val accountId: Int,
+    val tenantCode: String,
+
+    val academicYearId: Int,
+    val academicYearName: String,
+
+    val academicTermId: Int,
+    val termCode: String,
+    val termName: String,
+    val termNumber: Int,
+
+    val studentCount: Int,
+    val amountPerStudentCedis: String,
+    val totalAmountCedis: String,
+
+    val isPaid: Boolean,
+    val paymentStatus: String,
+
+    val paystackReference: String?,
+
+    val dueDateEpochMillis: Long,
+    val paidAtEpochMillis: Long?,
+    val createdAtEpochMillis: Long
+)
+
+
+
+
+
+
+
+// testing only
+
+@kotlinx.serialization.Serializable
+data class CreateTestInvoiceRequest(
+    val tenantCode: String,
+    val studentCount: Int? = null
+)
+
+@kotlinx.serialization.Serializable
+data class CreateTestInvoiceResponse(
+    val message: String,
+    val invoiceId: Int,
+    val tenantCode: String,
+    val studentCount: Int,
+    val amountPerStudentCedis: String,
+    val totalAmountCedis: String,
+    val paymentStatus: String
+)

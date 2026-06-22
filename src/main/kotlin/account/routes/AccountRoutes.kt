@@ -21,6 +21,7 @@ import com.example.account.email.AccountEmailService
 import com.example.account.repo.AccountsRepository
 import com.example.account.service.TenantProvisioningService
 import com.example.config.AppConfig
+import com.example.superadmin.repos.BillingRepository
 import io.ktor.http.ContentType
 
 import io.ktor.http.HttpStatusCode
@@ -149,6 +150,16 @@ fun Route.accountRoutes() {
                         accountId = account.id,
                         tenantResponse = tenantResponse
                     )
+                println("====================================================")
+                println("🧾 [VERIFY-EMAIL] Creating initial free-trial invoice...")
+                println("====================================================")
+
+                val trialInvoiceCreated = BillingRepository.createInitialTrialInvoiceForNewAccount(
+                    accountId = updatedAccount.id,
+                    dateEpochMillis = System.currentTimeMillis()
+                )
+
+                println("✅ [VERIFY-EMAIL] trialInvoiceCreated = $trialInvoiceCreated")
 
                 println("✅ [VERIFY-EMAIL] AccountsRepository.saveTenantProvisioningSuccess(...) succeeded")
                 println("🧾 [VERIFY-EMAIL] updatedAccount.id = ${updatedAccount.id}")

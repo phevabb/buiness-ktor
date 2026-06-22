@@ -2,10 +2,13 @@ package com.example.superadmin.routes
 
 
 
+import com.example.superadmin.dto.CreateTestInvoiceRequest
 import com.example.superadmin.dto.SimpleMessageResponse
+import com.example.superadmin.dto.CreateTestInvoiceResponse
 import com.example.superadmin.repos.BillingRepository
 import io.ktor.http.HttpStatusCode
 import io.ktor.server.application.call
+import io.ktor.server.request.receive
 import io.ktor.server.response.respond
 import io.ktor.server.routing.Route
 import io.ktor.server.routing.get
@@ -14,6 +17,38 @@ import io.ktor.server.routing.route
 
 fun Route.superAdminBillingRoutes() {
     route("/api/superadmin/billing") {
+
+
+
+        post("/test-invoice") {
+            val request = call.receive<CreateTestInvoiceRequest>()
+
+            if (request.tenantCode.isBlank()) {
+                call.respond(
+                    HttpStatusCode.BadRequest,
+                    SimpleMessageResponse("tenantCode is required")
+                )
+                return@post
+            }
+
+            try {
+                val response = BillingRepository.createTestPendingInvoiceForTenant(
+                    tenantCode = request.tenantCode,
+                    studentCountOverride = request.studentCount
+                )
+
+                call.respond(HttpStatusCode.Created, response)
+            } catch (e: Exception) {
+                call.respond(
+                    HttpStatusCode.BadRequest,
+                    SimpleMessageResponse(e.message ?: "Unable to create test invoice")
+                )
+            }
+        }
+
+
+
+
 
 
         get("/academic-years") {
