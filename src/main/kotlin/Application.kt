@@ -47,7 +47,15 @@ val tenantSuperAdminClient = TenantSuperAdminClient(
 
 val paystackClient = PaystackClient(
     httpClient = tenantHttpClient,
-    secretKey = System.getenv("PAYSTACK_SECRET_KEY") ?: "sk_test_your_key_here"
+//    secretKey = System.getenv("PAYSTACK_SECRET_KEY") ?: "sk_test_your_key_here"
+
+
+//    secretKey =  "sk_test_7b250f25faa65af86b48c4d5ff006db68c275799"
+      secretKey =  "sk_live_871a2fb6c9226ac7c502b5a2b865fd1e1f0773fe"
+
+
+
+
 )
 
 val paymentService = PaymentService(
