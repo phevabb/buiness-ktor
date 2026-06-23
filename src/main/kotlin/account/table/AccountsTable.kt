@@ -47,6 +47,9 @@ object AccountsTable : IntIdTable("accounts") {
     val lastPaidTermId = integer("last_paid_term_id").nullable()
     val lastPaymentAtEpochMillis = long("last_payment_at_epoch_millis").nullable()
 
+    // password stuff
+    val passwordResetTokenHash = varchar("password_reset_token_hash", 255).nullable()
+    val passwordResetExpiresAtEpochMillis = long("password_reset_expires_at_epoch_millis").nullable()
 }
 // billing stats
 //trial

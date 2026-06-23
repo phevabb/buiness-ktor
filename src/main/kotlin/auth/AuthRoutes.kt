@@ -2,6 +2,11 @@ package auth
 
 
 
+import com.example.account.dto.ChangePasswordRequest
+import com.example.account.dto.ForgotPasswordRequest
+import com.example.account.dto.ResetPasswordRequest
+import com.example.account.dto.SimpleAuthResponse
+import com.example.account.email.AccountEmailService
 import io.ktor.http.HttpStatusCode
 import io.ktor.server.auth.authenticate
 import io.ktor.server.request.receive
@@ -12,6 +17,8 @@ import kotlinx.serialization.Serializable
 import org.mindrot.jbcrypt.BCrypt
 import com.example.account.repo.AccountsRepository
 import com.example.auth.JwtConfig
+import io.ktor.server.auth.jwt.JWTPrincipal
+import io.ktor.server.auth.principal
 
 @Serializable
 data class LoginRequest(
@@ -59,6 +66,116 @@ data class LoginResponse(
 )
 
 fun Route.authRoutes() {
+
+
+    post("/forgot-password") {
+        val req = call.receive<ForgotPasswordRequest>()
+        val email = req.email.trim().lowercase()
+
+        if (email.isBlank()) {
+            call.respond(
+                HttpStatusCode.BadRequest,
+                SimpleAuthResponse("Email is required.")
+            )
+            return@post
+        }
+
+        val resetResult = AccountsRepository.createPasswordResetToken(email)
+
+        /**
+         * Security note:
+         * Always return a generic success message so attackers cannot discover registered emails.
+         */
+        if (resetResult != null) {
+            val frontendBaseUrl = System.getenv("BUSINESS_FRONTEND_URL")
+                ?: "http://localhost:5173"
+
+            val resetUrl = "$frontendBaseUrl/auth/reset-password?token=${resetResult.resetToken}"
+
+            AccountEmailService.sendPasswordResetEmail(
+                toEmail = resetResult.email,
+                fullName = resetResult.fullName,
+                schoolName = resetResult.schoolName,
+                resetUrl = resetUrl
+            )
+        }
+
+        call.respond(
+            HttpStatusCode.OK,
+            SimpleAuthResponse("If this email exists, a password reset link has been sent.")
+        )
+    }
+
+    post("/reset-password") {
+        val req = call.receive<ResetPasswordRequest>()
+
+        try {
+            AccountsRepository.resetPasswordWithToken(
+                token = req.token,
+                newPassword = req.newPassword,
+                confirmPassword = req.confirmPassword
+            )
+
+            call.respond(
+                HttpStatusCode.OK,
+                SimpleAuthResponse("Password reset successfully. You can now login.")
+            )
+        } catch (e: IllegalArgumentException) {
+            call.respond(
+                HttpStatusCode.BadRequest,
+                SimpleAuthResponse(e.message ?: "Unable to reset password.")
+            )
+        }
+    }
+
+    authenticate("auth-jwt") {
+        post("/change-password") {
+            val principal = call.principal<JWTPrincipal>()
+
+            val accountId = principal
+                ?.payload
+                ?.getClaim("accountId")
+                ?.asInt()
+                ?: principal
+                    ?.payload
+                    ?.getClaim("userId")
+                    ?.asInt()
+
+            if (accountId == null) {
+                call.respond(
+                    HttpStatusCode.Unauthorized,
+                    SimpleAuthResponse("Invalid session.")
+                )
+                return@post
+            }
+
+            val req = call.receive<ChangePasswordRequest>()
+
+            try {
+                AccountsRepository.changePassword(
+                    accountId = accountId,
+                    currentPassword = req.currentPassword,
+                    newPassword = req.newPassword,
+                    confirmPassword = req.confirmPassword
+                )
+
+                call.respond(
+                    HttpStatusCode.OK,
+                    SimpleAuthResponse("Password changed successfully.")
+                )
+            } catch (e: IllegalArgumentException) {
+                call.respond(
+                    HttpStatusCode.BadRequest,
+                    SimpleAuthResponse(e.message ?: "Unable to change password.")
+                )
+            }
+        }
+    }
+
+
+
+
+
 
     post("/login") {
         println("========== LOGIN REQUEST START ==========")

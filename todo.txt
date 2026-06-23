@@ -21,3 +21,18 @@ import org.jetbrains.exposed.v1.core.eq
 import org.jetbrains.exposed.v1.core.eq
 import org.jetbrains.exposed.v1.core.greaterEq
 import org.jetbrains.exposed.v1.core.lessEq
+
+
+
+
+
+
+
+fix password reset etc
+
+Tenant not found error
+------------------------
+check the 9000 and 9001
+
+
+check the url of the reset password... local produc.

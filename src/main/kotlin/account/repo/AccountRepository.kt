@@ -715,11 +715,164 @@ object AccountsRepository {
         val principalLoginUserId: String?,
         val principalPin: String?
     )
+
+
+    fun createPasswordResetToken(
+        email: String
+    ): PasswordResetTokenResult? = transaction {
+        val normalizedEmail = email.trim().lowercase()
+
+        if (normalizedEmail.isBlank()) {
+            throw IllegalArgumentException("Email is required.")
+        }
+
+        val row = AccountsTable
+            .selectAll()
+            .where { AccountsTable.email eq normalizedEmail }
+            .singleOrNull()
+            ?: return@transaction null
+
+        val accountId = row[AccountsTable.id].value
+
+        val resetToken = AccountSecurity.generateSecureToken()
+        val resetTokenHash = AccountSecurity.sha256(resetToken)
+
+        AccountsTable.update({ AccountsTable.id eq accountId }) {
+            it[passwordResetTokenHash] = resetTokenHash
+            it[passwordResetExpiresAtEpochMillis] =
+                System.currentTimeMillis() + PASSWORD_RESET_TOKEN_EXPIRY_MILLIS
+        }
+
+        PasswordResetTokenResult(
+            accountId = accountId,
+            email = row[AccountsTable.email],
+            fullName = row[AccountsTable.fullName],
+            schoolName = row[AccountsTable.schoolName],
+            resetToken = resetToken
+        )
+    }
+
+    fun resetPasswordWithToken(
+        token: String,
+        newPassword: String,
+        confirmPassword: String
+    ): Boolean = transaction {
+        if (token.trim().isBlank()) {
+            throw IllegalArgumentException("Reset token is required.")
+        }
+
+        if (newPassword.isBlank()) {
+            throw IllegalArgumentException("New password is required.")
+        }
+
+        if (newPassword != confirmPassword) {
+            throw IllegalArgumentException("Passwords do not match.")
+        }
+
+        if (!isStrongPassword(newPassword)) {
+            throw IllegalArgumentException(
+                "Password must contain at least 8 characters, uppercase, lowercase, number, and special character."
+            )
+        }
+
+        val tokenHash = AccountSecurity.sha256(token.trim())
+        val now = System.currentTimeMillis()
+
+        val row = AccountsTable
+            .selectAll()
+            .where { AccountsTable.passwordResetTokenHash eq tokenHash }
+            .singleOrNull()
+            ?: throw IllegalArgumentException("Invalid or expired password reset link.")
+
+        val expiresAt = row[AccountsTable.passwordResetExpiresAtEpochMillis]
+
+        if (expiresAt == null || expiresAt < now) {
+            throw IllegalArgumentException("Password reset link has expired.")
+        }
+
+        val accountId = row[AccountsTable.id].value
+        val passwordHash = AccountSecurity.hashPassword(newPassword)
+
+        AccountsTable.update({ AccountsTable.id eq accountId }) {
+            it[AccountsTable.passwordHash] = passwordHash
+            it[passwordResetTokenHash] = null
+            it[passwordResetExpiresAtEpochMillis] = null
+        }
+
+        true
+    }
+
+    fun changePassword(
+        accountId: Int,
+        currentPassword: String,
+        newPassword: String,
+        confirmPassword: String
+    ): Boolean = transaction {
+        if (currentPassword.isBlank()) {
+            throw IllegalArgumentException("Current password is required.")
+        }
+
+        if (newPassword.isBlank()) {
+            throw IllegalArgumentException("New password is required.")
+        }
+
+        if (newPassword != confirmPassword) {
+            throw IllegalArgumentException("Passwords do not match.")
+        }
+
+        if (!isStrongPassword(newPassword)) {
+            throw IllegalArgumentException(
+                "Password must contain at least 8 characters, uppercase, lowercase, number, and special character."
+            )
+        }
+
+        val row = AccountsTable
+            .selectAll()
+            .where { AccountsTable.id eq accountId }
+            .singleOrNull()
+            ?: throw IllegalArgumentException("Account not found.")
+
+        val existingHash = row[AccountsTable.passwordHash]
+
+        val currentPasswordMatches = org.mindrot.jbcrypt.BCrypt.checkpw(
+            currentPassword,
+            existingHash
+        )
+
+        if (!currentPasswordMatches) {
+            throw IllegalArgumentException("Current password is incorrect.")
+        }
+
+        val newPasswordHash = AccountSecurity.hashPassword(newPassword)
+
+        AccountsTable.update({ AccountsTable.id eq accountId }) {
+            it[passwordHash] = newPasswordHash
+            it[passwordResetTokenHash] = null
+            it[passwordResetExpiresAtEpochMillis] = null
+        }
+
+        true
+    }
+
 }
 
 
 
 
+
+
+
+
+
+private const val PASSWORD_RESET_TOKEN_EXPIRY_MILLIS = 60L * 60L * 1000L // 1 hour
+
+data class PasswordResetTokenResult(
+    val accountId: Int,
+    val email: String,
+    val fullName: String,
+    val schoolName: String,
+    val resetToken: String
+)
 
 
 

@@ -3,6 +3,41 @@ package com.example.account.dto
 
 
 import kotlinx.serialization.Serializable
+@Serializable
+data class ForgotPasswordRequest(
+    val email: String
+)
+
+@Serializable
+data class ResetPasswordRequest(
+    val token: String,
+    val newPassword: String,
+    val confirmPassword: String
+)
+
+@Serializable
+data class ChangePasswordRequest(
+    val currentPassword: String,
+    val newPassword: String,
+    val confirmPassword: String
+)
+
+@Serializable
+data class SimpleAuthResponse(
+    val message: String
+)
+
+
+
+
+
+
+
+
+
+
+
+
 
 @Serializable
 data class CreateAccountRequest(

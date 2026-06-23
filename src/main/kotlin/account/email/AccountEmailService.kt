@@ -1,8 +1,5 @@
 package com.example.account.email
 
-
-
-
 import com.example.config.AppConfig
 import jakarta.mail.Authenticator
 import jakarta.mail.Message
@@ -21,14 +18,56 @@ object AccountEmailService {
         to: String,
         schoolName: String,
         verificationUrl: String
-    ) = withContext(Dispatchers.IO) {
-
+    ) {
         println("Preparing verification email for: $to")
         println("SMTP host: ${AppConfig.smtpHost}")
         println("SMTP port: ${AppConfig.smtpPort}")
         println("SMTP SSL: ${AppConfig.emailUseSsl}")
         println("Verification URL: $verificationUrl")
 
+        val html = buildVerificationEmailHtml(
+            schoolName = schoolName,
+            verificationUrl = verificationUrl
+        )
+
+        sendHtmlEmail(
+            toEmail = to,
+            subject = "Verify your Phena school account",
+            htmlBody = html
+        )
+
+        println("Verification email sent successfully to: $to")
+    }
+
+    suspend fun sendPasswordResetEmail(
+        toEmail: String,
+        fullName: String,
+        schoolName: String,
+        resetUrl: String
+    ) {
+        println("Preparing password reset email for: $toEmail")
+        println("Password reset URL: $resetUrl")
+
+        val html = buildPasswordResetEmailHtml(
+            fullName = fullName,
+            schoolName = schoolName,
+            resetUrl = resetUrl
+        )
+
+        sendHtmlEmail(
+            toEmail = toEmail,
+            subject = "Reset your Phena password",
+            htmlBody = html
+        )
+
+        println("Password reset email sent successfully to: $toEmail")
+    }
+
+    private suspend fun sendHtmlEmail(
+        toEmail: String,
+        subject: String,
+        htmlBody: String
+    ) = withContext(Dispatchers.IO) {
         val properties = Properties().apply {
             put("mail.smtp.auth", "true")
             put("mail.smtp.host", AppConfig.smtpHost)
@@ -46,6 +85,7 @@ object AccountEmailService {
                 put("mail.smtp.starttls.enable", "true")
                 put("mail.smtp.starttls.required", "true")
                 put("mail.smtp.ssl.enable", "false")
+                put("mail.smtp.ssl.trust", AppConfig.smtpHost)
             }
         }
 
@@ -63,11 +103,6 @@ object AccountEmailService {
 
         session.debug = AppConfig.emailDebug
 
-        val html = buildVerificationEmailHtml(
-            schoolName = schoolName,
-            verificationUrl = verificationUrl
-        )
-
         val message = MimeMessage(session).apply {
             setFrom(
                 InternetAddress(
@@ -78,16 +113,14 @@ object AccountEmailService {
 
             setRecipients(
                 Message.RecipientType.TO,
-                InternetAddress.parse(to)
+                InternetAddress.parse(toEmail)
             )
 
-            subject = "Verify your Phena school account"
-            setContent(html, "text/html; charset=utf-8")
+            setSubject(subject, "UTF-8")
+            setContent(htmlBody, "text/html; charset=utf-8")
         }
 
         Transport.send(message)
-
-        println("Verification email sent successfully to: $to")
     }
 
     private fun buildVerificationEmailHtml(
@@ -98,16 +131,12 @@ object AccountEmailService {
         val safeVerificationUrl = escapeHtml(verificationUrl)
 
         return """
-
 <!doctype html>
-
 <html>
 <body style="margin:0;padding:0;background:#eef6ff;font-family:'Segoe UI',Arial,sans-serif;">
 
-
 <div style="max-width:680px;margin:0 auto;padding:40px 20px;">
 
-    <!-- Card -->
     <div style="
         background:linear-gradient(180deg,#ffffff 0%,#f8fbff 100%);
         border-radius:28px;
@@ -116,7 +145,6 @@ object AccountEmailService {
         border:1px solid #dbeafe;
     ">
 
-        <!-- Header -->
         <div style="
             background:linear-gradient(135deg,#2563eb 0%,#60a5fa 100%);
             padding:40px;
@@ -133,7 +161,6 @@ object AccountEmailService {
                 font-size:34px;
                 font-weight:800;
                 line-height:70px;
-                backdrop-filter:blur(10px);
             ">
                 P
             </div>
@@ -160,7 +187,6 @@ object AccountEmailService {
 
         </div>
 
-        <!-- Body -->
         <div style="padding:42px;">
 
             <p style="
@@ -182,7 +208,6 @@ object AccountEmailService {
                 Please verify your email address to activate your school account and gain full access to the platform.
             </p>
 
-            <!-- CTA -->
             <div style="text-align:center;margin:40px 0;">
                 <a href="$safeVerificationUrl"
                    style="
@@ -200,7 +225,6 @@ object AccountEmailService {
                 </a>
             </div>
 
-            <!-- Link -->
             <div style="
                 background:#eff6ff;
                 border:1px solid #bfdbfe;
@@ -227,7 +251,6 @@ object AccountEmailService {
                 </p>
             </div>
 
-            <!-- Footer -->
             <div style="
                 margin-top:30px;
                 padding-top:24px;
@@ -258,11 +281,183 @@ object AccountEmailService {
 
 </div>
 
+</body>
+</html>
+        """.trimIndent()
+    }
+
+    private fun buildPasswordResetEmailHtml(
+        fullName: String,
+        schoolName: String,
+        resetUrl: String
+    ): String {
+        val safeFullName = escapeHtml(fullName)
+        val safeSchoolName = escapeHtml(schoolName)
+        val safeResetUrl = escapeHtml(resetUrl)
+
+        return """
+<!doctype html>
+<html>
+<body style="margin:0;padding:0;background:#f8fafc;font-family:'Segoe UI',Arial,sans-serif;">
+
+<div style="max-width:680px;margin:0 auto;padding:40px 20px;">
+
+    <div style="
+        background:#ffffff;
+        border-radius:28px;
+        overflow:hidden;
+        box-shadow:0 20px 50px rgba(15,23,42,0.10);
+        border:1px solid #e2e8f0;
+    ">
+
+        <div style="
+            background:linear-gradient(135deg,#0f172a 0%,#2563eb 100%);
+            padding:40px;
+            text-align:center;
+        ">
+
+            <div style="
+                width:70px;
+                height:70px;
+                margin:0 auto;
+                border-radius:20px;
+                background:rgba(255,255,255,0.18);
+                color:#ffffff;
+                font-size:34px;
+                font-weight:800;
+                line-height:70px;
+            ">
+                P
+            </div>
+
+            <h1 style="
+                margin:24px 0 0;
+                color:#ffffff;
+                font-size:32px;
+                font-weight:700;
+                line-height:1.2;
+            ">
+                Reset Your Password
+            </h1>
+
+            <p style="
+                margin:12px auto 0;
+                color:rgba(255,255,255,0.9);
+                font-size:16px;
+                max-width:500px;
+                line-height:1.7;
+            ">
+                Secure password reset for your Phena account
+            </p>
+
+        </div>
+
+        <div style="padding:42px;">
+
+            <p style="
+                margin:0 0 18px;
+                color:#334155;
+                font-size:16px;
+                line-height:1.8;
+            ">
+                Hello <strong style="color:#0f172a;">$safeFullName</strong>,
+            </p>
+
+            <p style="
+                margin:0 0 18px;
+                color:#64748b;
+                font-size:16px;
+                line-height:1.8;
+            ">
+                A password reset was requested for
+                <strong style="color:#1e40af;">$safeSchoolName</strong>.
+            </p>
+
+            <p style="
+                margin:0;
+                color:#64748b;
+                font-size:16px;
+                line-height:1.8;
+            ">
+                Click the button below to reset your password. This link expires in 1 hour.
+            </p>
+
+            <div style="text-align:center;margin:40px 0;">
+                <a href="$safeResetUrl"
+                   style="
+                       display:inline-block;
+                       background:linear-gradient(135deg,#2563eb,#3b82f6);
+                       color:#ffffff;
+                       text-decoration:none;
+                       padding:16px 38px;
+                       border-radius:14px;
+                       font-size:16px;
+                       font-weight:600;
+                       box-shadow:0 10px 25px rgba(37,99,235,0.25);
+                   ">
+                    Reset Password
+                </a>
+            </div>
+
+            <div style="
+                background:#eff6ff;
+                border:1px solid #bfdbfe;
+                border-radius:16px;
+                padding:18px;
+            ">
+                <p style="
+                    margin:0 0 10px;
+                    color:#475569;
+                    font-size:13px;
+                    font-weight:600;
+                ">
+                    Button not working?
+                </p>
+
+                <p style="
+                    margin:0;
+                    word-break:break-all;
+                    color:#2563eb;
+                    font-size:13px;
+                    line-height:1.6;
+                ">
+                    $safeResetUrl
+                </p>
+            </div>
+
+            <div style="
+                margin-top:30px;
+                padding-top:24px;
+                border-top:1px solid #e2e8f0;
+            ">
+                <p style="
+                    margin:0;
+                    color:#94a3b8;
+                    font-size:13px;
+                    line-height:1.7;
+                ">
+                    If you did not request this password reset, you can safely ignore this email.
+                </p>
+            </div>
+
+        </div>
+
+    </div>
+
+    <p style="
+        text-align:center;
+        margin-top:24px;
+        color:#94a3b8;
+        font-size:12px;
+    ">
+        © 2026 Phena School Management System
+    </p>
+
+</div>
 
 </body>
 </html>
-""".trimIndent()
-
+        """.trimIndent()
     }
 
     private fun escapeHtml(value: String): String {
