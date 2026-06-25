@@ -50,8 +50,8 @@ val paystackClient = PaystackClient(
 //    secretKey = System.getenv("PAYSTACK_SECRET_KEY") ?: "sk_test_your_key_here"
 
 
-//    secretKey =  "sk_test_7b250f25faa65af86b48c4d5ff006db68c275799"
-      secretKey =  "sk_live_871a2fb6c9226ac7c502b5a2b865fd1e1f0773fe"
+//    secretKey =  "sk_test_7b250f25faa65af86b48c4d5ff006db68c275799" // environment only
+      secretKey =  "sk_live_871a2fb6c9226ac7c502b5a2b865fd1e1f0773fe"   // production only
 
 
 
@@ -60,7 +60,13 @@ val paystackClient = PaystackClient(
 
 val paymentService = PaymentService(
     paystackClient = paystackClient,
-    callbackBaseUrl = System.getenv("BUSINESS_FRONTEND_URL") ?: "http://localhost:3000"
+
+
+//    callbackBaseUrl = System.getenv("BUSINESS_FRONTEND_URL") ?: "http://localhost:3000" // environment only
+
+    //    callbackBaseUrl = System.getenv("BUSINESS_FRONTEND_URL") ?: "phenasms.online" // future only
+
+    callbackBaseUrl = System.getenv("BUSINESS_FRONTEND_URL") ?: "https://enterprise-tenant-vue-frontend.vercel.app" // production only
 )
 
 fun Application.module() {
