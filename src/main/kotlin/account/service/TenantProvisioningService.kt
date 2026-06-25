@@ -46,7 +46,7 @@ object TenantProvisioningService {
 
         val academicCalendar = BillingRepository.findAcademicCalendarForDate(serverNow)
             ?: error("No active academic year/term found for current server time.")
-
+            println("academic is $academicCalendar    ")
         val request = CreateTenantRequest(
             schoolName = account.schoolName,
             tenantCode = account.tenantCode,

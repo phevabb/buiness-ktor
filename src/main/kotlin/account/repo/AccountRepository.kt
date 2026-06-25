@@ -74,6 +74,11 @@ object AccountsRepository {
 
                         principalLoginUserId = row[AccountsTable.principalLoginUserId],
                         principalPin = row[AccountsTable.principalPin],
+
+                        adminPin  = row[AccountsTable.adminPin],
+                        adminLoginUserId = row[AccountsTable.adminLoginUserId],
+
+
                         defaultLocalDomain = row[AccountsTable.defaultLocalDomain],
                         fallbackLocalUrl = row[AccountsTable.fallbackLocalUrl],
                     )
@@ -395,6 +400,10 @@ object AccountsRepository {
 
                         principalLoginUserId = row[AccountsTable.principalLoginUserId],
                         principalPin = row[AccountsTable.principalPin],
+
+                        adminPin  = row[AccountsTable.adminPin],
+                        adminLoginUserId = row[AccountsTable.adminLoginUserId],
+
                         defaultLocalDomain = row[AccountsTable.defaultLocalDomain],
                         fallbackLocalUrl = row[AccountsTable.fallbackLocalUrl],
                     )
@@ -427,6 +436,12 @@ object AccountsRepository {
 
             it[principalLoginUserId] = tenantResponse.principalLoginUserId
             it[principalPin] = tenantResponse.principalPin
+            it[adminLoginUserId] =tenantResponse.adminLoginUserId
+            it[adminPin ] = tenantResponse.adminPin
+
+
+
+
         }
 
         AccountsTable
@@ -707,13 +722,15 @@ object AccountsRepository {
 
         val defaultDomain: String?,
         val defaultLocalDomain: String?,
-        val fallbackLocalUrl:String?,
+        val fallbackLocalUrl: String?,
 
 
-    val tenantStatus: String?,
+        val tenantStatus: String?,
 
         val principalLoginUserId: String?,
-        val principalPin: String?
+        val principalPin: String?,
+        val adminLoginUserId: String?,
+        val adminPin: String?
     )
 
 

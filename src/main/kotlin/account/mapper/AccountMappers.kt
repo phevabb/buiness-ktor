@@ -37,6 +37,11 @@ fun ResultRow.toAccount(): Account =
         principalPin = this[AccountsTable.principalPin],
         defaultLocalDomain = this[AccountsTable.defaultDomain],
         fallbackLocalUrl = this[AccountsTable.fallbackLocalUrl],
+
+
+        adminPin  = this[AccountsTable.adminPin],
+        adminLoginUserId = this[AccountsTable.adminLoginUserId],
+
     )
 
 fun Account.toResponse(): AccountResponse =

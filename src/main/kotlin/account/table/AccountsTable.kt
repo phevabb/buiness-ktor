@@ -33,8 +33,16 @@ object AccountsTable : IntIdTable("accounts") {
     val defaultLocalDomain = varchar("default_local_domain", 255).nullable()
     val fallbackLocalUrl = varchar("fallback_local_url", 255).nullable()
     val tenantStatus = varchar("tenant_status", 50).nullable()
+
     val principalLoginUserId = varchar("principal_login_user_id", 100).nullable()
     val principalPin = varchar("principal_pin", 50).nullable()
+
+    val adminPin = varchar("admin_pin", 50).nullable()
+    val adminLoginUserId = varchar("admin_login_user_id", 50).nullable()
+
+
+
+
 
 
     // Billing / trial tracking

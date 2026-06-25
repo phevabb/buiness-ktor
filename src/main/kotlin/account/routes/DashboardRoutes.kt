@@ -45,6 +45,8 @@ data class WorkspaceDashboardResponse(
     val principalPin: String?,
     val principalLoginUserId: String?,
 
+    val adminLoginUserId:String?,
+    val adminPin: String?,
     )
 
 fun Route.dashboardRoutes() {
@@ -61,6 +63,7 @@ fun Route.dashboardRoutes() {
             }
 
             val account = AccountsRepository.findByTenantCode(tenantCode)
+            println("account is print $account")
 
             if (account == null) {
                 call.respond(
@@ -76,6 +79,8 @@ fun Route.dashboardRoutes() {
             val domain = account.defaultDomain ?: ""
             val defaultLocalDomain = account.defaultLocalDomain ?: ""
             val fallbackLocalUrl = account.fallbackLocalUrl ?: ""
+            val adminLoginUserId = account.adminLoginUserId ?: ""
+            val adminPin = account.adminPin?: ""
 
             call.respond(
                 HttpStatusCode.OK,
@@ -111,6 +116,9 @@ fun Route.dashboardRoutes() {
                     academicYear = account.academicYear,
                     principalLoginUserId = account.principalLoginUserId,
                     principalPin = account.principalPin,
+
+                    adminLoginUserId = adminLoginUserId,
+                    adminPin = adminPin
 
 
                 )

@@ -36,3 +36,28 @@ check the 9000 and 9001
 
 
 check the url of the reset password... local produc.
+
+
+
+
+
+ adminPin       adminLoginUserId
+
+ for billing: POST http://127.0.0.1:9000/api/superadmin/billing/test-invoice
+          Content-Type: application/json
+
+
+          {
+            "tenantCode": "ACCRAA-632190",
+            "studentCount": 2
+
+          }
+
+
+
+
+
+
+
+
+

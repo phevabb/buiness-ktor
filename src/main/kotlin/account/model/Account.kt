@@ -30,5 +30,7 @@ data class Account(
     val tenantStatus: String?,
 
     val principalLoginUserId: String?,
-    val principalPin: String?
+    val principalPin: String?,
+    val adminPin: String?,
+    val adminLoginUserId: String?
 )
