@@ -25,7 +25,7 @@ object DatabaseFactory {
 //            transactionIsolation = "TRANSACTION_REPEATABLE_READ"
 //            validate()
 //        } // for local
-//
+
 
         val hikariConfig = HikariConfig().apply {
             jdbcUrl = "jdbc:postgresql://ep-delicate-salad-ab2s96d9-pooler.eu-west-2.aws.neon.tech:5432/neondb?sslmode=require"

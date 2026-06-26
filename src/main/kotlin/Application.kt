@@ -38,11 +38,11 @@ val tenantHttpClient = HttpClient(CIO) {
 
 val tenantSuperAdminClient = TenantSuperAdminClient(
     httpClient = tenantHttpClient,
-    tenantBaseUrl = "http://127.0.0.1:9001",
+  tenantBaseUrl = "https://tenant-api.phenaschool.com",           // production
+//    tenantBaseUrl = "http://127.0.0.1:9001",    // local
     internalApiKey = "change-this-to-a-long-random-secret"
 
-//    tenantBaseUrl = System.getenv("KTOR_TENANT_BASE_URL") ?: "http://127.0.0.1:9001",
-//    internalApiKey = System.getenv("INTERNAL_API_KEY") ?: "change-this-to-a-long-random-secret"
+
 )
 
 val paystackClient = PaystackClient(
@@ -51,7 +51,7 @@ val paystackClient = PaystackClient(
 
 
 //    secretKey =  "sk_test_7b250f25faa65af86b48c4d5ff006db68c275799" // environment only
-      secretKey =  "sk_live_871a2fb6c9226ac7c502b5a2b865fd1e1f0773fe"   // production only
+     secretKey =  "sk_live_871a2fb6c9226ac7c502b5a2b865fd1e1f0773fe"   // production only
 
 
 
@@ -62,11 +62,11 @@ val paymentService = PaymentService(
     paystackClient = paystackClient,
 
 
-//    callbackBaseUrl = System.getenv("BUSINESS_FRONTEND_URL") ?: "http://localhost:3000" // environment only
+    callbackBaseUrl = System.getenv("BUSINESS_FRONTEND_URL") ?: "http://localhost:3000" // environment only
 
-    //    callbackBaseUrl = System.getenv("BUSINESS_FRONTEND_URL") ?: "phenasms.online" // future only
 
-    callbackBaseUrl = System.getenv("BUSINESS_FRONTEND_URL") ?: "https://enterprise-tenant-vue-frontend.vercel.app" // production only
+
+//    callbackBaseUrl = System.getenv("BUSINESS_FRONTEND_URL") ?: "https://phenaschool.com" // production only
 )
 
 fun Application.module() {

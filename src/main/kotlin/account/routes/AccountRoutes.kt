@@ -135,8 +135,10 @@ fun Route.accountRoutes() {
                 println("🧾 [VERIFY-EMAIL] updatedAccount.principalLoginUserId = ${updatedAccount.principalLoginUserId}")
                 println("🧾 [VERIFY-EMAIL] updatedAccount.principalPin = ${updatedAccount.principalPin}")
 
-//                 val loginUrl = "http://localhost:5173/auth/login"
-                val loginUrl = "https://business-vue-sms.vercel.app/auth/login"
+//                 val loginUrl = "http://localhost:5173/auth/login"    // local
+                val loginUrl = "https://phenaschool.com/auth/login"     // production
+
+
 
                 println("🌐 [VERIFY-EMAIL] loginUrl = $loginUrl")
                 println("📤 [VERIFY-EMAIL] Responding with 200 OK verification success page")

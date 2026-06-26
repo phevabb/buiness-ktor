@@ -5,7 +5,7 @@ package com.example.config
 import io.github.cdimascio.dotenv.dotenv
 
 
-//
+
 //object AppConfig {
 //
 //    // Business Ktor URL
@@ -21,17 +21,17 @@ import io.github.cdimascio.dotenv.dotenv
 //
 //    // Gmail SMTP
 //    val smtpHost: String
-//        get() = "smtp.gmail.com"
+//        get() = "mail.privateemail.com"
 //
 //    // Recommended for Gmail testing
 //    val smtpPort: Int
 //        get() = 465
 //
 //    val smtpUsername: String
-//        get() = "phevab1@gmail.com"
+//        get() = "support@phenaschool.com"
 //
 //    val smtpPassword: String
-//        get() = "asxkumlgijtpucya"
+//        get() = "Uncleproton1."
 //
 //    val smtpFromEmail: String
 //        get() = smtpUsername
@@ -52,22 +52,26 @@ object AppConfig {
 
     // Business Ktor URL
     val publicApiBaseUrl: String
-        get() = "https://kogschool.com/business"
-    // Tenant Ktor URL
-    val tenantApiBaseUrl: String
-        get() = "https://kogschool.com/enterprise"
+    get() = "https://api.phenaschool.com"
+
+
+val tenantApiBaseUrl: String
+    get() = "https://tenant-api.phenaschool.com"
+
+
+
     val tenantInternalApiKey: String
         get() = "change-this-secret-key"
     // Gmail SMTP
     val smtpHost: String
-        get() = "smtp.gmail.com"
+        get() = "mail.privateemail.com"
     // Recommended for Gmail testing
     val smtpPort: Int
         get() = 465
     val smtpUsername: String
-        get() = "phevab1@gmail.com"
+        get() = "support@phenaschool.com"
     val smtpPassword: String
-        get() = "asxkumlgijtpucya"
+        get() = "Uncleproton1."
     val smtpFromEmail: String
         get() = smtpUsername
     val smtpFromName: String
