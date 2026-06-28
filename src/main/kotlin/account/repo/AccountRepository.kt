@@ -413,6 +413,33 @@ object AccountsRepository {
     }
 
 
+    fun updateAccountActive(
+        accountId: Int,
+        isActive: Boolean
+    ): Boolean {
+        val updatedRows = transaction {
+            AccountsTable.update({ AccountsTable.id eq accountId }) {
+                it[AccountsTable.isActive] = isActive
+            }
+        }
+
+        return updatedRows > 0
+    }
+
+    fun updateAccountStatus(
+        accountId: Int,
+        status: String
+    ): Boolean {
+        val updatedRows = transaction {
+            AccountsTable.update({ AccountsTable.id eq accountId }) {
+                it[AccountsTable.tenantStatus] = status
+            }
+        }
+
+        return updatedRows > 0
+    }
+
+
 
     fun saveTenantProvisioningSuccess(
         accountId: Int,

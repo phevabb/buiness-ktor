@@ -11,22 +11,31 @@ object DatabaseFactory {
 
     private lateinit var database: Database
 
+    private fun getEnv(name: String, default: String): String {
+        return System.getenv(name)
+            ?: System.getProperty(name)
+            ?: default
+    }
+
     fun init(vararg tables: Table) {
         if (::database.isInitialized) return
 
         val hikariConfig = HikariConfig().apply {
-            jdbcUrl = System.getenv("DB_URL")
-            username = System.getenv("DB_USER")
-            password = System.getenv("DB_PASSWORD")
-            driverClassName = "org.postgresql.Driver"
+            jdbcUrl = getEnv(
+                "DB_URL",
+                "jdbc:postgresql://localhost:5432/ktor_business"
+            )
 
+            username = getEnv("DB_USER", "postgres")
+            password = getEnv("DB_PASSWORD", "postgres")
+
+            driverClassName = "org.postgresql.Driver"
             maximumPoolSize = 10
             minimumIdle = 2
             isAutoCommit = false
             transactionIsolation = "TRANSACTION_REPEATABLE_READ"
             validate()
         }
-
 
         val dataSource = HikariDataSource(hikariConfig)
         database = Database.connect(dataSource)

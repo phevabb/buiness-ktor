@@ -1,5 +1,13 @@
 package com.example
 
+import io.github.cdimascio.dotenv.dotenv
+import io.ktor.server.netty.EngineMain
+
 fun main(args: Array<String>) {
-    io.ktor.server.netty.EngineMain.main(args)
+    dotenv {
+        ignoreIfMissing = true
+        systemProperties = true
+    }
+
+    EngineMain.main(args)
 }

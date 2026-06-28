@@ -40,11 +40,43 @@ class TenantSuperAdminClient(
         tenantCode: String,
         status: String
     ): TenantStatusUpdateResponse {
-        return httpClient.patch("$tenantBaseUrl/api/internal/superadmin/tenants/$tenantCode/status") {
-            header("X-Internal-Api-Key", internalApiKey)
-            contentType(ContentType.Application.Json)
-            setBody(UpdateTenantStatusRequest(status = status))
-        }.body()
+
+        val url = "$tenantBaseUrl/api/internal/superadmin/tenants/$tenantCode/status"
+
+        println("========== [BUSINESS CLIENT] UPDATE TENANT STATUS START ==========")
+        println("[BUSINESS CLIENT] tenantBaseUrl=$tenantBaseUrl")
+        println("[BUSINESS CLIENT] Final URL=$url")
+        println("[BUSINESS CLIENT] tenantCode=$tenantCode")
+        println("[BUSINESS CLIENT] status=$status")
+        println("[BUSINESS CLIENT] internalApiKey loaded=${internalApiKey.isNotBlank()}")
+        println("[BUSINESS CLIENT] internalApiKey length=${internalApiKey.length}")
+
+        return try {
+            val response = httpClient.patch(url) {
+                header("X-Internal-Api-Key", internalApiKey)
+                contentType(ContentType.Application.Json)
+                setBody(UpdateTenantStatusRequest(status = status))
+            }
+
+            println("[BUSINESS CLIENT] Tenant service HTTP status: ${response.status}")
+
+            val body = response.body<TenantStatusUpdateResponse>()
+
+            println("[BUSINESS CLIENT] Response body parsed successfully: $body")
+            println("========== [BUSINESS CLIENT] UPDATE TENANT STATUS SUCCESS ==========")
+
+            body
+
+        } catch (e: Exception) {
+            println("[BUSINESS CLIENT] ERROR calling tenant service")
+            println("[BUSINESS CLIENT] Exception type: ${e::class.qualifiedName}")
+            println("[BUSINESS CLIENT] Exception message: ${e.message}")
+            e.printStackTrace()
+
+            println("========== [BUSINESS CLIENT] UPDATE TENANT STATUS FAILED ==========")
+
+            throw e
+        }
     }
 }
 

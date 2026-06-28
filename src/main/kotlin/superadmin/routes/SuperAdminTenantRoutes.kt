@@ -54,52 +54,95 @@ fun Route.superAdminTenantRoutes(
          * ktor-business internally calls:
          * PATCH ktor-tenant/api/internal/superadmin/tenants/{tenantCode}/status
          */
-        patch("/{tenantCode}/status") {
-            val tenantCode = call.parameters["tenantCode"]
+    patch("/{tenantCode}/status") {
+        println("========== [BUSINESS] PATCH TENANT STATUS START ==========")
 
-            if (tenantCode.isNullOrBlank()) {
-                call.respond(
-                    HttpStatusCode.BadRequest,
-                    mapOf("message" to "Tenant code is required")
+        val tenantCode = call.parameters["tenantCode"]
+
+        println("[BUSINESS] Received tenantCode from path: $tenantCode")
+
+        if (tenantCode.isNullOrBlank()) {
+            println("[BUSINESS] ERROR: tenantCode is null or blank")
+
+            call.respond(
+                HttpStatusCode.BadRequest,
+                mapOf("message" to "Tenant code is required")
+            )
+            return@patch
+        }
+
+        val request = try {
+            val body = call.receive<BusinessUpdateTenantStatusRequest>()
+            println("[BUSINESS] Request body received successfully: status=${body.status}")
+            body
+        } catch (e: Exception) {
+            println("[BUSINESS] ERROR: Failed to receive request body")
+            println("[BUSINESS] Body parse error: ${e.message}")
+
+            call.respond(
+                HttpStatusCode.BadRequest,
+                mapOf(
+                    "message" to "Invalid request body",
+                    "error" to (e.message ?: "Unknown error")
                 )
-                return@patch
-            }
+            )
+            return@patch
+        }
 
-            val request = call.receive<BusinessUpdateTenantStatusRequest>()
+        val allowedStatuses = setOf(
+            "provisioning",
+            "active",
+            "inactive",
+            "suspended",
+            "failed"
+        )
 
-            val allowedStatuses = setOf(
-                "provisioning",
-                "active",
-                "inactive",
-                "suspended",
-                "failed"
+        println("[BUSINESS] Allowed statuses: $allowedStatuses")
+        println("[BUSINESS] Requested status: ${request.status}")
+
+        if (request.status !in allowedStatuses) {
+            println("[BUSINESS] ERROR: Invalid tenant status: ${request.status}")
+
+            call.respond(
+                HttpStatusCode.BadRequest,
+                mapOf("message" to "Invalid tenant status")
+            )
+            return@patch
+        }
+
+        try {
+            println("[BUSINESS] Calling tenant service to update status...")
+            println("[BUSINESS] tenantCode=$tenantCode")
+            println("[BUSINESS] status=${request.status}")
+
+            val result = tenantSuperAdminClient.updateTenantStatus(
+                tenantCode = tenantCode,
+                status = request.status
             )
 
-            if (request.status !in allowedStatuses) {
-                call.respond(
-                    HttpStatusCode.BadRequest,
-                    mapOf("message" to "Invalid tenant status")
-                )
-                return@patch
-            }
+            println("[BUSINESS] Tenant service response received successfully")
+            println("[BUSINESS] Result: $result")
+            println("========== [BUSINESS] PATCH TENANT STATUS SUCCESS ==========")
 
-            try {
-                val result = tenantSuperAdminClient.updateTenantStatus(
-                    tenantCode = tenantCode,
-                    status = request.status
-                )
+            call.respond(HttpStatusCode.OK, result)
 
-                call.respond(HttpStatusCode.OK, result)
-            } catch (e: Exception) {
-                call.respond(
-                    HttpStatusCode.BadGateway,
-                    mapOf(
-                        "message" to "Unable to update tenant status from tenant service",
-                        "error" to (e.message ?: "Unknown error")
-                    )
+        } catch (e: Exception) {
+            println("[BUSINESS] ERROR: Failed to update tenant status from tenant service")
+            println("[BUSINESS] Exception type: ${e::class.qualifiedName}")
+            println("[BUSINESS] Exception message: ${e.message}")
+            e.printStackTrace()
+
+            println("========== [BUSINESS] PATCH TENANT STATUS FAILED ==========")
+
+            call.respond(
+                HttpStatusCode.BadGateway,
+                mapOf(
+                    "message" to "Unable to update tenant status from tenant service",
+                    "error" to (e.message ?: "Unknown error")
                 )
-            }
+            )
         }
+    }
 
 }
 

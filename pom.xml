@@ -34,6 +34,11 @@
             <!-- Kotlinx JSON Serialization for Ktor -->
 
 
+        <dependency>
+            <groupId>io.github.cdimascio</groupId>
+            <artifactId>dotenv-kotlin</artifactId>
+            <version>6.5.1</version>
+        </dependency>
 
         <dependency>
             <groupId>org.jetbrains.kotlin</groupId>

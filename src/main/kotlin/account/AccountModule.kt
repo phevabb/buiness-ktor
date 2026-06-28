@@ -1,25 +1,21 @@
 package account
 
-
-
-
 import auth.authRoutes
 import com.example.account.routes.accountRoutes
 import com.example.account.routes.dashboardRoutes
-
-import com.example.account.service.BcryptPasswordHasher
+import com.example.superadmin.client.TenantSuperAdminClient
 import com.example.superadmin.routes.superAdminAccountRoutes
 import com.example.superadmin.routes.superAdminTenantRoutes
-import com.example.tenantSuperAdminClient
 import io.ktor.server.application.Application
-import io.ktor.server.routing.routing
-
 import io.ktor.server.routing.route
 import io.ktor.server.routing.routing
 
-fun Application.accountModule() {
+fun Application.accountModule(
+    tenantSuperAdminClient: TenantSuperAdminClient
+) {
     routing {
         route("/api") {
+
             route("/accounts") {
                 accountRoutes()
             }
@@ -39,13 +35,6 @@ fun Application.accountModule() {
             route("/internal/super/tenant") {
                 superAdminTenantRoutes(tenantSuperAdminClient)
             }
-
-
-
-
-
-
-
         }
     }
 }
