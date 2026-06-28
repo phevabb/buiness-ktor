@@ -1,3 +1,19 @@
+
+TO production / environment
+----------------------------
+appConfig.kt    in config
+accountRoutes   in account/routes  139: val loginUrl = ...
+DatabaseFactory in config
+Application.kt  in kotlin/application.kt    37 and 52
+
+
+
+
+
+
+
+
+
 todo
 ----
 1. change the ui of the email content sent  DONE
@@ -10,13 +26,6 @@ what if i switch to nacmecheap email
 
 
 
-
-TO production / environment
-----------------------------
-appConfig.kt    in config
-accountRoutes   in account/routes  139: val loginUrl = "https://business-vue-sms.vercel.app/auth/login"
-DatabaseFactory in config
-Application.kt  in kotlin/application.kt    37 and 52
 
 
 
