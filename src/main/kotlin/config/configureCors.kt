@@ -1,22 +1,33 @@
 package com.example.config
 
-import io.ktor.http.*
-import io.ktor.server.application.*
-import io.ktor.server.plugins.cors.routing.*
+import io.ktor.http.HttpHeaders
+import io.ktor.http.HttpMethod
+import io.ktor.server.application.Application
+import io.ktor.server.application.install
+import io.ktor.server.plugins.cors.routing.CORS
 
 fun Application.configureCors() {
-
     install(CORS) {
 
-        // ✅ PRODUCTION FRONTEND
+        // =========================
+        // PRODUCTION FRONTEND
+        // =========================
         allowHost("phenaschool.com", schemes = listOf("https"))
         allowHost("www.phenaschool.com", schemes = listOf("https"))
 
-        // ✅ LOCAL DEV
+        // =========================
+        // LOCAL / TESTING
+        // =========================
         allowHost("localhost:5173", schemes = listOf("http"))
         allowHost("127.0.0.1:5173", schemes = listOf("http"))
 
-        // ✅ METHODS
+        // If testing with old local frontend port:
+        allowHost("localhost:3000", schemes = listOf("http"))
+        allowHost("127.0.0.1:3000", schemes = listOf("http"))
+
+        // =========================
+        // METHODS
+        // =========================
         allowMethod(HttpMethod.Options)
         allowMethod(HttpMethod.Get)
         allowMethod(HttpMethod.Post)
@@ -24,14 +35,19 @@ fun Application.configureCors() {
         allowMethod(HttpMethod.Patch)
         allowMethod(HttpMethod.Delete)
 
-        // ✅ HEADERS
+        // =========================
+        // HEADERS
+        // =========================
         allowHeader(HttpHeaders.ContentType)
         allowHeader(HttpHeaders.Authorization)
         allowHeader(HttpHeaders.Accept)
+
+        // Your custom headers
         allowHeader("X-Tenant-Slug")
         allowHeader("X-Tenant-Code")
+        allowHeader("X-Internal-Api-Key")
 
-        // ✅ REQUIRED for cookies/auth
+        // If frontend sends cookies or Authorization
         allowCredentials = true
 
         maxAgeInSeconds = 3600
