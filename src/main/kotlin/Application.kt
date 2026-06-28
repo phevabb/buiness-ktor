@@ -38,8 +38,8 @@ val tenantHttpClient = HttpClient(CIO) {
 
 val tenantSuperAdminClient = TenantSuperAdminClient(
     httpClient = tenantHttpClient,
-  tenantBaseUrl = "https://tenant-api.phenaschool.com",           // production
-//    tenantBaseUrl = "http://127.0.0.1:9001",    // local
+//  tenantBaseUrl = "https://tenant-api.phenaschool.com",           // production
+    tenantBaseUrl = "http://127.0.0.1:9001",    // local
     internalApiKey = "change-this-to-a-long-random-secret"
 
 
@@ -50,23 +50,18 @@ val paystackClient = PaystackClient(
 //    secretKey = System.getenv("PAYSTACK_SECRET_KEY") ?: "sk_test_your_key_here"
 
 
-//    secretKey =  "sk_test_7b250f25faa65af86b48c4d5ff006db68c275799" // local
-     secretKey =  "sk_live_871a2fb6c9226ac7c502b5a2b865fd1e1f0773fe"   // production
 
 
-
+    secretKey = System.getenv("PAYSTACK_SECRET_KEY") ?: "sk_test_7b250f25faa65af86b48c4d5ff006db68c275799"
 
 )
 
 val paymentService = PaymentService(
     paystackClient = paystackClient,
+    callbackBaseUrl = System.getenv("BUSINESS_FRONTEND_URL")
+    ?: "http://localhost:3000" // fallback for local ONLY (never change this)
 
 
-    callbackBaseUrl = System.getenv("BUSINESS_FRONTEND_URL") ?: "http://localhost:3000" // environment
-
-
-
-//    callbackBaseUrl = System.getenv("BUSINESS_FRONTEND_URL") ?: "https://phenaschool.com" // production
 )
 
 fun Application.module() {

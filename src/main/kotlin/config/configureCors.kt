@@ -11,6 +11,7 @@ import io.ktor.server.plugins.cors.routing.CORS
 fun Application.configureCors() {
     install(CORS) {
         // Frontend dev origins
+        anyHost()
         allowHost("localhost:3000", schemes = listOf("http"))
         allowHost("127.0.0.1:3000", schemes = listOf("http"))
 

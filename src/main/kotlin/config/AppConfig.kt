@@ -1,83 +1,26 @@
 package com.example.config
 
-
-
-import io.github.cdimascio.dotenv.dotenv
-
-//
-//
-//object AppConfig {
-//
-//    // Business Ktor URL
-//    val publicApiBaseUrl: String
-//        get() = "http://127.0.0.1:9000"
-//
-//    // Tenant Ktor URL
-//    val tenantApiBaseUrl: String
-//        get() = "http://127.0.0.1:9001"
-//
-//    val tenantInternalApiKey: String
-//        get() = "change-this-secret-key"
-//
-//    // Gmail SMTP
-//    val smtpHost: String
-//        get() = "mail.privateemail.com"
-//
-//    // Recommended for Gmail testing
-//    val smtpPort: Int
-//        get() = 465
-//
-//    val smtpUsername: String
-//        get() = "support@phenaschool.com"
-//
-//    val smtpPassword: String
-//        get() = "Uncleproton1."
-//
-//    val smtpFromEmail: String
-//        get() = smtpUsername
-//
-//    val smtpFromName: String
-//        get() = "Phena School Management System"
-//
-//
-//    val emailUseSsl: Boolean
-//        get() = true
-//
-//    val emailDebug: Boolean
-//        get() = true
-//}
-
-
 object AppConfig {
 
-    // Business Ktor URL
-    val publicApiBaseUrl: String
-    get() = "https://api.phenaschool.com"
+    fun getEnv(name: String, default: String = ""): String {
+        return System.getenv(name) ?: default
+    }
 
+    val publicApiBaseUrl = getEnv("PUBLIC_API_BASE_URL", "http://127.0.0.1:9000")
+    val tenantApiBaseUrl = getEnv("TENANT_API_BASE_URL", "http://127.0.0.1:9001")
+    val tenantInternalApiKey = getEnv("TENANT_INTERNAL_API_KEY")
 
-val tenantApiBaseUrl: String
-    get() = "https://tenant-api.phenaschool.com"
+    val smtpHost = getEnv("SMTP_HOST")
+    val smtpPort = getEnv("SMTP_PORT", "465").toInt()
 
+    val smtpUsername = getEnv("SMTP_USERNAME")
+    val smtpPassword = getEnv("SMTP_PASSWORD")
 
+    val smtpFromEmail = smtpUsername
+    val smtpFromName = getEnv("SMTP_FROM_NAME")
 
-    val tenantInternalApiKey: String
-        get() = "change-this-secret-key"
-    // Gmail SMTP
-    val smtpHost: String
-        get() = "mail.privateemail.com"
-    // Recommended for Gmail testing
-    val smtpPort: Int
-        get() = 465
-    val smtpUsername: String
-        get() = "support@phenaschool.com"
-    val smtpPassword: String
-        get() = "Uncleproton1."
-    val smtpFromEmail: String
-        get() = smtpUsername
-    val smtpFromName: String
-        get() = "Phena School Management System"
-    val emailUseSsl: Boolean
-        get() = true
-    val emailDebug: Boolean
-        get() = true
+    val emailUseSsl = getEnv("EMAIL_USE_SSL", "true").toBoolean()
+    val emailDebug = getEnv("EMAIL_DEBUG", "true").toBoolean()
+
+    val paystackSecretKey = getEnv("PAYSTACK_SECRET_KEY")
 }
