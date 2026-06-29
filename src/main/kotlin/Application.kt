@@ -21,14 +21,20 @@ import kotlinx.serialization.json.Json
 
 fun Application.module() {
 
-    println("========== [BUSINESS APP STARTING] ==========")
-    println("[CONFIG] PUBLIC_API_BASE_URL=${AppConfig.publicApiBaseUrl}")
-    println("[CONFIG] TENANT_API_BASE_URL=${AppConfig.tenantApiBaseUrl}")
-    println("[CONFIG] BUSINESS_FRONTEND_URL=${AppConfig.businessFrontendUrl}")
-    println("[CONFIG] TENANT_INTERNAL_API_KEY loaded=${AppConfig.tenantInternalApiKey.isNotBlank()}")
-    println("[CONFIG] TENANT_INTERNAL_API_KEY length=${AppConfig.tenantInternalApiKey.length}")
-    println("[CONFIG] PAYSTACK_SECRET_KEY loaded=${AppConfig.paystackSecretKey.isNotBlank()}")
-    println("=============================================")
+    println("STEP 1")
+    DatabaseFactory.init(*AppTables.all)
+
+    println("STEP 2")
+    configureSerialization()
+
+    println("STEP 3")
+    configureSecurity()
+
+
+
+    println("STEP 5")
+
+
 
     val tenantHttpClient = HttpClient(CIO) {
         install(ClientContentNegotiation) {
@@ -47,6 +53,9 @@ fun Application.module() {
         tenantBaseUrl = AppConfig.tenantApiBaseUrl,
         internalApiKey = AppConfig.tenantInternalApiKey
     )
+
+    println("STEP 4")
+    accountModule(tenantSuperAdminClient)
 
     val paystackClient = PaystackClient(
         httpClient = tenantHttpClient,
