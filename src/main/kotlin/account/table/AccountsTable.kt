@@ -59,9 +59,3 @@ object AccountsTable : IntIdTable("accounts") {
     val passwordResetTokenHash = varchar("password_reset_token_hash", 255).nullable()
     val passwordResetExpiresAtEpochMillis = long("password_reset_expires_at_epoch_millis").nullable()
 }
-// billing stats
-//trial
-//active
-//pending_payment
-//overdue
-//suspended

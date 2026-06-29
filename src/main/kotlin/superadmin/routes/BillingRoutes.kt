@@ -22,6 +22,7 @@ import io.ktor.server.routing.route
 
 import io.ktor.http.HttpStatusCode
 import io.ktor.server.application.call
+import io.ktor.server.auth.authenticate
 import io.ktor.server.request.receive
 import io.ktor.server.response.respond
 import io.ktor.server.routing.delete
@@ -37,206 +38,208 @@ fun Route.billingRoutes(
 ) {
     route("/api/billing") {
 
+        authenticate("super-admin-jwt") {
+            get("/invoices") {
+                val accountId = call.request.queryParameters["accountId"]?.toIntOrNull()
+                val tenantCode = call.request.queryParameters["tenantCode"]
 
-        get("/invoices") {
-            val accountId = call.request.queryParameters["accountId"]?.toIntOrNull()
-            val tenantCode = call.request.queryParameters["tenantCode"]
+                if (accountId == null && tenantCode.isNullOrBlank()) {
+                    call.respond(
+                        HttpStatusCode.BadRequest,
+                        SimpleMessageResponse("accountId or tenantCode is required")
+                    )
+                    return@get
+                }
 
-            if (accountId == null && tenantCode.isNullOrBlank()) {
-                call.respond(
-                    HttpStatusCode.BadRequest,
-                    SimpleMessageResponse("accountId or tenantCode is required")
+                val invoices = BillingRepository.findInvoices(
+                    accountId = accountId,
+                    tenantCode = tenantCode
                 )
-                return@get
+
+                call.respond(HttpStatusCode.OK, invoices)
             }
 
-            val invoices = BillingRepository.findInvoices(
-                accountId = accountId,
-                tenantCode = tenantCode
-            )
-
-            call.respond(HttpStatusCode.OK, invoices)
-        }
 
 
+            post("/academic-years") {
+                val request = call.receive<CreateAcademicYearRequest>()
 
-        post("/academic-years") {
-            val request = call.receive<CreateAcademicYearRequest>()
+                val academicYearId = BillingRepository.createAcademicYearWithTerms(request)
 
-            val academicYearId = BillingRepository.createAcademicYearWithTerms(request)
-
-            call.respond(
-                HttpStatusCode.Created,
-                CreateAcademicYearResponse(
-                    message = "Academic year created successfully",
-                    academicYearId = academicYearId
-                )
-            )
-        }
-
-        /**
-         * Get current billing for an account.
-         *
-         * Normal:
-         * GET /api/billing/current?accountId=1
-         *
-         * Testing future term:
-         * GET /api/billing/current?accountId=1&dateEpochMillis=1789000000000
-         */
-        get("/current") {
-            val accountId = call.request.queryParameters["accountId"]?.toIntOrNull()
-
-            if (accountId == null) {
                 call.respond(
-                    HttpStatusCode.BadRequest,
-                    SimpleMessageResponse("accountId is required")
+                    HttpStatusCode.Created,
+                    CreateAcademicYearResponse(
+                        message = "Academic year created successfully",
+                        academicYearId = academicYearId
+                    )
                 )
-                return@get
             }
 
-            val dateEpochMillis = call.request.queryParameters["dateEpochMillis"]?.toLongOrNull()
+            /**
+             * Get current billing for an account.
+             *
+             * Normal:
+             * GET /api/billing/current?accountId=1
+             *
+             * Testing future term:
+             * GET /api/billing/current?accountId=1&dateEpochMillis=1789000000000
+             */
+            get("/current") {
+                val accountId = call.request.queryParameters["accountId"]?.toIntOrNull()
 
-            val billing = BillingRepository.getCurrentBillingForAccount(
-                accountId = accountId,
-                dateEpochMillis = dateEpochMillis
-            )
+                if (accountId == null) {
+                    call.respond(
+                        HttpStatusCode.BadRequest,
+                        SimpleMessageResponse("accountId is required")
+                    )
+                    return@get
+                }
 
-            if (billing == null) {
-                call.respond(
-                    HttpStatusCode.NotFound,
-                    SimpleMessageResponse("No active billing term found for this date")
-                )
-                return@get
-            }
+                val dateEpochMillis = call.request.queryParameters["dateEpochMillis"]?.toLongOrNull()
 
-            call.respond(HttpStatusCode.OK, billing)
-        }
-
-        /**
-         * Initialize Paystack payment.
-         */
-        post("/invoices/{invoiceId}/paystack/initialize") {
-            val invoiceId = call.parameters["invoiceId"]?.toIntOrNull()
-
-            if (invoiceId == null) {
-                call.respond(
-                    HttpStatusCode.BadRequest,
-                    SimpleMessageResponse("Invalid invoice ID")
-                )
-                return@post
-            }
-
-            try {
-                val response = paymentService.initializePayment(invoiceId)
-                call.respond(HttpStatusCode.OK, response)
-            } catch (e: Exception) {
-                call.respond(
-                    HttpStatusCode.BadRequest,
-                    SimpleMessageResponse(e.message ?: "Unable to initialize payment")
-                )
-            }
-        }
-
-        /**
-         * Verify Paystack payment.
-         */
-        get("/paystack/verify/{reference}") {
-            val reference = call.parameters["reference"]
-
-            if (reference.isNullOrBlank()) {
-                call.respond(
-                    HttpStatusCode.BadRequest,
-                    SimpleMessageResponse("Reference is required")
-                )
-                return@get
-            }
-
-            val response = paymentService.verifyPayment(reference)
-            call.respond(HttpStatusCode.OK, response)
-        }
-
-
-
-
-        patch("/academic-years/{academicYearId}") {
-            val academicYearId = call.parameters["academicYearId"]?.toIntOrNull()
-
-            if (academicYearId == null) {
-                call.respond(
-                    HttpStatusCode.BadRequest,
-                    SimpleMessageResponse("Invalid academic year ID")
-                )
-                return@patch
-            }
-
-            val request = call.receive<CreateAcademicYearRequest>()
-
-            try {
-                val updated = BillingRepository.updateAcademicYearCalendar(
-                    academicYearId = academicYearId,
-                    request = request
+                val billing = BillingRepository.getCurrentBillingForAccount(
+                    accountId = accountId,
+                    dateEpochMillis = dateEpochMillis
                 )
 
-                if (!updated) {
+                if (billing == null) {
                     call.respond(
                         HttpStatusCode.NotFound,
-                        SimpleMessageResponse("Academic year not found")
+                        SimpleMessageResponse("No active billing term found for this date")
+                    )
+                    return@get
+                }
+
+                call.respond(HttpStatusCode.OK, billing)
+            }
+
+            /**
+             * Initialize Paystack payment.
+             */
+            post("/invoices/{invoiceId}/paystack/initialize") {
+                val invoiceId = call.parameters["invoiceId"]?.toIntOrNull()
+
+                if (invoiceId == null) {
+                    call.respond(
+                        HttpStatusCode.BadRequest,
+                        SimpleMessageResponse("Invalid invoice ID")
+                    )
+                    return@post
+                }
+
+                try {
+                    val response = paymentService.initializePayment(invoiceId)
+                    call.respond(HttpStatusCode.OK, response)
+                } catch (e: Exception) {
+                    call.respond(
+                        HttpStatusCode.BadRequest,
+                        SimpleMessageResponse(e.message ?: "Unable to initialize payment")
+                    )
+                }
+            }
+
+            /**
+             * Verify Paystack payment.
+             */
+            get("/paystack/verify/{reference}") {
+                val reference = call.parameters["reference"]
+
+                if (reference.isNullOrBlank()) {
+                    call.respond(
+                        HttpStatusCode.BadRequest,
+                        SimpleMessageResponse("Reference is required")
+                    )
+                    return@get
+                }
+
+                val response = paymentService.verifyPayment(reference)
+                call.respond(HttpStatusCode.OK, response)
+            }
+
+
+
+
+            patch("/academic-years/{academicYearId}") {
+                val academicYearId = call.parameters["academicYearId"]?.toIntOrNull()
+
+                if (academicYearId == null) {
+                    call.respond(
+                        HttpStatusCode.BadRequest,
+                        SimpleMessageResponse("Invalid academic year ID")
                     )
                     return@patch
                 }
 
-                call.respond(
-                    HttpStatusCode.OK,
-                    UpdateAcademicYearResponse(
-                        message = "Academic year updated successfully",
-                        academicYearId = academicYearId
+                val request = call.receive<CreateAcademicYearRequest>()
+
+                try {
+                    val updated = BillingRepository.updateAcademicYearCalendar(
+                        academicYearId = academicYearId,
+                        request = request
                     )
-                )
-            } catch (e: Exception) {
-                call.respond(
-                    HttpStatusCode.BadRequest,
-                    SimpleMessageResponse(e.message ?: "Unable to update academic year")
-                )
-            }
-        }
 
-        delete("/academic-years/{academicYearId}") {
-            val academicYearId = call.parameters["academicYearId"]?.toIntOrNull()
+                    if (!updated) {
+                        call.respond(
+                            HttpStatusCode.NotFound,
+                            SimpleMessageResponse("Academic year not found")
+                        )
+                        return@patch
+                    }
 
-            if (academicYearId == null) {
-                call.respond(
-                    HttpStatusCode.BadRequest,
-                    SimpleMessageResponse("Invalid academic year ID")
-                )
-                return@delete
-            }
-
-            try {
-                val deleted = BillingRepository.deleteAcademicYearCalendar(
-                    academicYearId = academicYearId
-                )
-
-                if (!deleted) {
                     call.respond(
-                        HttpStatusCode.NotFound,
-                        SimpleMessageResponse("Academic year not found")
+                        HttpStatusCode.OK,
+                        UpdateAcademicYearResponse(
+                            message = "Academic year updated successfully",
+                            academicYearId = academicYearId
+                        )
+                    )
+                } catch (e: Exception) {
+                    call.respond(
+                        HttpStatusCode.BadRequest,
+                        SimpleMessageResponse(e.message ?: "Unable to update academic year")
+                    )
+                }
+            }
+
+            delete("/academic-years/{academicYearId}") {
+                val academicYearId = call.parameters["academicYearId"]?.toIntOrNull()
+
+                if (academicYearId == null) {
+                    call.respond(
+                        HttpStatusCode.BadRequest,
+                        SimpleMessageResponse("Invalid academic year ID")
                     )
                     return@delete
                 }
 
-                call.respond(
-                    HttpStatusCode.OK,
-                    DeleteAcademicYearResponse(
-                        message = "Academic year deleted successfully",
+                try {
+                    val deleted = BillingRepository.deleteAcademicYearCalendar(
                         academicYearId = academicYearId
                     )
-                )
-            } catch (e: Exception) {
-                call.respond(
-                    HttpStatusCode.BadRequest,
-                    SimpleMessageResponse(e.message ?: "Unable to delete academic year")
-                )
+
+                    if (!deleted) {
+                        call.respond(
+                            HttpStatusCode.NotFound,
+                            SimpleMessageResponse("Academic year not found")
+                        )
+                        return@delete
+                    }
+
+                    call.respond(
+                        HttpStatusCode.OK,
+                        DeleteAcademicYearResponse(
+                            message = "Academic year deleted successfully",
+                            academicYearId = academicYearId
+                        )
+                    )
+                } catch (e: Exception) {
+                    call.respond(
+                        HttpStatusCode.BadRequest,
+                        SimpleMessageResponse(e.message ?: "Unable to delete academic year")
+                    )
+                }
             }
+
         }
 
 

@@ -1,20 +1,19 @@
 package com.example
 
+import com.auth0.jwt.JWT
+import com.auth0.jwt.algorithms.Algorithm
 import com.example.auth.JwtConfig
-import io.ktor.server.application.Application
-
-
 import io.ktor.http.HttpStatusCode
-import io.ktor.server.application.install
-
-import io.ktor.server.auth.Authentication
-import io.ktor.server.auth.authentication
-import io.ktor.server.auth.jwt.JWTPrincipal
-import io.ktor.server.auth.jwt.jwt
+import io.ktor.server.application.*
+import io.ktor.server.auth.*
+import io.ktor.server.auth.jwt.*
 import io.ktor.server.response.respond
 
 fun Application.configureSecurity() {
+
     install(Authentication) {
+
+        // ✅ ✅ CLIENT AUTH (TENANT USERS)
         jwt("auth-jwt") {
             realm = JwtConfig.REALM
 
@@ -25,27 +24,47 @@ fun Application.configureSecurity() {
                 val email = credential.payload.getClaim("email").asString()
                 val tenantCode = credential.payload.getClaim("tenantCode").asString()
 
-                println("JWT DEBUG: accountId = $accountId")
-                println("JWT DEBUG: email = $email")
-                println("JWT DEBUG: tenantCode = $tenantCode")
-
                 if (
                     accountId != null &&
                     !email.isNullOrBlank() &&
                     !tenantCode.isNullOrBlank()
                 ) {
                     JWTPrincipal(credential.payload)
-                } else {
-                    null
-                }
+                } else null
             }
 
             challenge { _, _ ->
-                println("JWT DEBUG: token rejected or expired")
-
                 call.respond(
                     HttpStatusCode.Unauthorized,
                     mapOf("error" to "Invalid or expired token")
+                )
+            }
+        }
+
+        // ✅ ✅ SUPER ADMIN AUTH (YOU 🔥)
+        jwt("super-admin-jwt") {
+
+            val secret = "super-secret-key"
+            val issuer = "phena"
+
+            verifier(
+                JWT.require(Algorithm.HMAC256(secret))
+                    .withIssuer(issuer)
+                    .build()
+            )
+
+            validate { credential ->
+                val adminId = credential.payload.getClaim("adminId").asInt()
+
+                if (adminId != null) {
+                    JWTPrincipal(credential.payload)
+                } else null
+            }
+
+            challenge { _, _ ->
+                call.respond(
+                    HttpStatusCode.Unauthorized,
+                    mapOf("error" to "Invalid or expired super admin token")
                 )
             }
         }

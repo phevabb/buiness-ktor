@@ -9,6 +9,7 @@ import com.example.superadmin.table.AcademicTermsTable
 import com.example.superadmin.table.AcademicYearsTable
 import com.example.superadmin.table.PaymentTransactionsTable
 import com.example.superadmin.table.SubscriptionInvoicesTable
+import com.example.superadmin.table.SuperAdminsTable
 import org.jetbrains.exposed.v1.core.Table
 
 object AppTables {
@@ -17,6 +18,7 @@ object AppTables {
         RefreshTokensTable,
         EmailVerificationTokensTable,
         PasswordResetTokensTable,
+        SuperAdminsTable,
 
         AcademicYearsTable,
         AcademicTermsTable,

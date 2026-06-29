@@ -8,6 +8,7 @@ import com.example.superadmin.dto.CreateTestInvoiceResponse
 import com.example.superadmin.repos.BillingRepository
 import io.ktor.http.HttpStatusCode
 import io.ktor.server.application.call
+import io.ktor.server.auth.authenticate
 import io.ktor.server.request.receive
 import io.ktor.server.response.respond
 import io.ktor.server.routing.Route
@@ -18,97 +19,96 @@ import io.ktor.server.routing.route
 fun Route.superAdminBillingRoutes() {
     route("/api/superadmin/billing") {
 
+        authenticate("super-admin-jwt") {
 
+            post("/test-invoice") {
+                val request = call.receive<CreateTestInvoiceRequest>()
 
-        post("/test-invoice") {
-            val request = call.receive<CreateTestInvoiceRequest>()
+                if (request.tenantCode.isBlank()) {
+                    call.respond(
+                        HttpStatusCode.BadRequest,
+                        SimpleMessageResponse("tenantCode is required")
+                    )
+                    return@post
+                }
 
-            if (request.tenantCode.isBlank()) {
-                call.respond(
-                    HttpStatusCode.BadRequest,
-                    SimpleMessageResponse("tenantCode is required")
-                )
-                return@post
+                try {
+                    val response = BillingRepository.createTestPendingInvoiceForTenant(
+                        tenantCode = request.tenantCode,
+                        studentCountOverride = request.studentCount
+                    )
+
+                    call.respond(HttpStatusCode.Created, response)
+                } catch (e: Exception) {
+                    call.respond(
+                        HttpStatusCode.BadRequest,
+                        SimpleMessageResponse(e.message ?: "Unable to create test invoice")
+                    )
+                }
             }
 
-            try {
-                val response = BillingRepository.createTestPendingInvoiceForTenant(
-                    tenantCode = request.tenantCode,
-                    studentCountOverride = request.studentCount
+
+
+            get("/academic-years") {
+                val search = call.request.queryParameters["search"]
+
+                val calendars = BillingRepository.listAcademicYearCalendars(
+                    search = search
                 )
 
-                call.respond(HttpStatusCode.Created, response)
-            } catch (e: Exception) {
+                call.respond(HttpStatusCode.OK, calendars)
+            }
+
+            /**
+             * GET /api/superadmin/billing/invoices
+             * GET /api/superadmin/billing/invoices?status=pending
+             * GET /api/superadmin/billing/invoices?search=calvary
+             */
+            get("/invoices") {
+                val status = call.request.queryParameters["status"]
+                val search = call.request.queryParameters["search"]
+
+                val invoices = BillingRepository.listInvoices(
+                    status = status,
+                    search = search
+                )
+
+                call.respond(HttpStatusCode.OK, invoices)
+            }
+
+            /**
+             * GET /api/superadmin/billing/transactions
+             */
+            get("/transactions") {
+                val status = call.request.queryParameters["status"]
+                val search = call.request.queryParameters["search"]
+
+                val transactions = BillingRepository.listTransactions(
+                    status = status,
+                    search = search
+                )
+
+                call.respond(HttpStatusCode.OK, transactions)
+            }
+
+            /**
+             * Manual trigger for testing overdue logic.
+             *
+             * POST /api/superadmin/billing/run-overdue-check
+             * POST /api/superadmin/billing/run-overdue-check?dateEpochMillis=1800000000000
+             */
+            post("/run-overdue-check") {
+                val dateEpochMillis = call.request.queryParameters["dateEpochMillis"]?.toLongOrNull()
+                    ?: System.currentTimeMillis()
+
+                val count = BillingRepository.markOverdueInvoices(dateEpochMillis)
+
                 call.respond(
-                    HttpStatusCode.BadRequest,
-                    SimpleMessageResponse(e.message ?: "Unable to create test invoice")
+                    HttpStatusCode.OK,
+                    SimpleMessageResponse("Overdue check completed. Updated invoices: $count")
                 )
             }
-        }
 
-
-
-
-
-
-        get("/academic-years") {
-            val search = call.request.queryParameters["search"]
-
-            val calendars = BillingRepository.listAcademicYearCalendars(
-                search = search
-            )
-
-            call.respond(HttpStatusCode.OK, calendars)
-        }
-
-        /**
-         * GET /api/superadmin/billing/invoices
-         * GET /api/superadmin/billing/invoices?status=pending
-         * GET /api/superadmin/billing/invoices?search=calvary
-         */
-        get("/invoices") {
-            val status = call.request.queryParameters["status"]
-            val search = call.request.queryParameters["search"]
-
-            val invoices = BillingRepository.listInvoices(
-                status = status,
-                search = search
-            )
-
-            call.respond(HttpStatusCode.OK, invoices)
-        }
-
-        /**
-         * GET /api/superadmin/billing/transactions
-         */
-        get("/transactions") {
-            val status = call.request.queryParameters["status"]
-            val search = call.request.queryParameters["search"]
-
-            val transactions = BillingRepository.listTransactions(
-                status = status,
-                search = search
-            )
-
-            call.respond(HttpStatusCode.OK, transactions)
-        }
-
-        /**
-         * Manual trigger for testing overdue logic.
-         *
-         * POST /api/superadmin/billing/run-overdue-check
-         * POST /api/superadmin/billing/run-overdue-check?dateEpochMillis=1800000000000
-         */
-        post("/run-overdue-check") {
-            val dateEpochMillis = call.request.queryParameters["dateEpochMillis"]?.toLongOrNull()
-                ?: System.currentTimeMillis()
-
-            val count = BillingRepository.markOverdueInvoices(dateEpochMillis)
-
-            call.respond(
-                HttpStatusCode.OK,
-                SimpleMessageResponse("Overdue check completed. Updated invoices: $count")
-            )
         }
     }
 }

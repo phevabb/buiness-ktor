@@ -1,6 +1,7 @@
 package com.example
 
 import account.accountModule
+import com.example.account.plugins.configureSerialization
 import com.example.config.AppConfig
 import com.example.config.DatabaseFactory
 import config.AppTables
@@ -61,9 +62,9 @@ fun Application.module() {
     )
 
     DatabaseFactory.init(*AppTables.all)
-
-    configureSecurity()
     configureSerialization()
+    configureSecurity()
+
     configureCors()
 
     accountModule(tenantSuperAdminClient)
