@@ -54,8 +54,7 @@ fun Application.module() {
         internalApiKey = AppConfig.tenantInternalApiKey
     )
 
-    println("STEP 4")
-    accountModule(tenantSuperAdminClient)
+
 
     val paystackClient = PaystackClient(
         httpClient = tenantHttpClient,
@@ -71,8 +70,8 @@ fun Application.module() {
     )
 
     DatabaseFactory.init(*AppTables.all)
-    configureSerialization()
-    configureSecurity()
+//    configureSerialization()
+//    configureSecurity()
 
     configureCors()
 
