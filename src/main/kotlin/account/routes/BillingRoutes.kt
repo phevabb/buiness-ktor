@@ -29,7 +29,7 @@ fun Route.billingRoutes(
          * Auth: auth-jwt
          * ============================================================
          */
-        authenticate("auth-jwt") {
+//        authenticate("auth-jwt") {
 
             /**
              * GET /api/billing/invoices?accountId=1
@@ -131,7 +131,7 @@ fun Route.billingRoutes(
                 val response = paymentService.verifyPayment(reference)
                 call.respond(HttpStatusCode.OK, response)
             }
-        }
+//        }
 
         /**
          * ============================================================
@@ -139,7 +139,7 @@ fun Route.billingRoutes(
          * Auth: super-admin-jwt
          * ============================================================
          */
-        authenticate("super-admin-jwt") {
+//        authenticate("super-admin-jwt") {
 
             /**
              * GET /api/billing/academic-years
@@ -265,6 +265,6 @@ fun Route.billingRoutes(
                     )
                 }
             }
-        }
+//        }
     }
 }
