@@ -1,9 +1,10 @@
 package com.example.account.service
 
 import com.example.account.dto.AccountResponse
-import com.example.config.AppConfig
+
 import com.example.superadmin.dto.TenantAcademicCalendarSeed
 import com.example.superadmin.repos.BillingRepository
+import config.AppConfig
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
 import io.ktor.client.engine.cio.CIO

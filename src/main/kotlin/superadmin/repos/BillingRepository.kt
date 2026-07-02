@@ -37,6 +37,15 @@ import java.math.BigDecimal
 object BillingRepository {
 
 
+    private fun normalizeTenantCodeForCompare(value: String): String {
+        return value
+            .trim()
+            .replace("-", "")
+            .replace("_", "")
+            .replace(" ", "")
+            .lowercase()
+    }
+
     fun createAcademicYearWithTerms(request: CreateAcademicYearRequest): Int = transaction {
         val now = System.currentTimeMillis()
 
@@ -787,19 +796,22 @@ object BillingRepository {
 
 
 
-
     fun createTestPendingInvoiceForTenant(
         tenantCode: String,
         studentCountOverride: Int? = null,
         dateEpochMillis: Long = System.currentTimeMillis()
     ): CreateTestInvoiceResponse = transaction {
-        val normalizedTenantCode = tenantCode.trim()
+        val requestedTenantCode = tenantCode.trim()
+        val requestedTenantCodeNormalized = normalizeTenantCodeForCompare(requestedTenantCode)
 
         val account = AccountsTable
             .selectAll()
-            .where { AccountsTable.tenantCode eq normalizedTenantCode }
-            .singleOrNull()
-            ?: throw IllegalArgumentException("Account not found for tenantCode: $normalizedTenantCode")
+            .firstOrNull { row ->
+                normalizeTenantCodeForCompare(row[AccountsTable.tenantCode]) == requestedTenantCodeNormalized
+            }
+            ?: throw IllegalArgumentException("Account not found for tenantCode: $requestedTenantCode")
+
+        val canonicalTenantCode = account[AccountsTable.tenantCode]
 
         val currentTerm = AcademicTermsTable
             .selectAll()
@@ -822,17 +834,8 @@ object BillingRepository {
         }
 
         val amountPerStudent = currentTerm[AcademicTermsTable.amountPerStudentCedis]
-        val totalAmount = amountPerStudent.multiply(java.math.BigDecimal(studentCount))
+        val totalAmount = amountPerStudent.multiply(BigDecimal(studentCount))
 
-        /**
-         * For testing, we intentionally allow another invoice
-         * by not using the normal unique account+term generation path.
-         *
-         * If your DB has a unique index on accountId + academicTermId,
-         * this will fail if a free_trial invoice already exists for the same term.
-         *
-         * If that happens, use the update-existing-free-trial approach below.
-         */
         val existingInvoice = SubscriptionInvoicesTable
             .selectAll()
             .where {
@@ -859,7 +862,7 @@ object BillingRepository {
         } else {
             SubscriptionInvoicesTable.insertAndGetId {
                 it[SubscriptionInvoicesTable.accountId] = accountId
-                it[SubscriptionInvoicesTable.tenantCode] = normalizedTenantCode
+                it[SubscriptionInvoicesTable.tenantCode] = canonicalTenantCode
                 it[SubscriptionInvoicesTable.academicYearId] = academicYearId
                 it[SubscriptionInvoicesTable.academicTermId] = academicTermId
                 it[SubscriptionInvoicesTable.studentCount] = studentCount
@@ -876,9 +879,9 @@ object BillingRepository {
         }
 
         CreateTestInvoiceResponse(
-            message = "Test invoice created successfully",
+            message = "Invoice generated successfully",
             invoiceId = invoiceId,
-            tenantCode = normalizedTenantCode,
+            tenantCode = canonicalTenantCode,
             studentCount = studentCount,
             amountPerStudentCedis = amountPerStudent.toPlainString(),
             totalAmountCedis = totalAmount.toPlainString(),
@@ -890,6 +893,20 @@ object BillingRepository {
 
 
 
+
+
+    fun resolveCanonicalTenantCode(
+        tenantCode: String
+    ): String? = transaction {
+        val incomingNormalized = normalizeTenantCodeForCompare(tenantCode)
+
+        AccountsTable
+            .selectAll()
+            .firstOrNull { row ->
+                normalizeTenantCodeForCompare(row[AccountsTable.tenantCode]) == incomingNormalized
+            }
+            ?.get(AccountsTable.tenantCode)
+    }
 
 
 }

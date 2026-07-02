@@ -1,6 +1,7 @@
 package com.example.account.email
 
-import com.example.config.AppConfig
+
+import config.AppConfig
 import jakarta.mail.Authenticator
 import jakarta.mail.Message
 import jakarta.mail.PasswordAuthentication

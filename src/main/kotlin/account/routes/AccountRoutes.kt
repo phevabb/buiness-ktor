@@ -20,8 +20,9 @@ import com.example.account.dto.UpdateAccountRequest
 import com.example.account.email.AccountEmailService
 import com.example.account.repo.AccountsRepository
 import com.example.account.service.TenantProvisioningService
-import com.example.config.AppConfig
+
 import com.example.superadmin.repos.BillingRepository
+import config.AppConfig
 import io.ktor.http.ContentType
 
 import io.ktor.http.HttpStatusCode

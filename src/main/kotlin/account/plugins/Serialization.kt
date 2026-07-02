@@ -1,4 +1,4 @@
-package com.example.account.plugins
+package account.plugins
 
 
 import io.ktor.serialization.kotlinx.json.json

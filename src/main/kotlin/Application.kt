@@ -1,8 +1,9 @@
 package com.example
 
 import account.accountModule
-import com.example.account.plugins.configureSerialization
-import com.example.config.AppConfig
+import account.plugins.configureSerialization
+
+
 import com.example.config.DatabaseFactory
 import config.AppTables
 import com.example.config.configureCors
@@ -10,7 +11,9 @@ import com.example.superadmin.client.PaystackClient
 import com.example.superadmin.client.TenantSuperAdminClient
 import com.example.superadmin.routes.billingRoutes
 import com.example.superadmin.routes.superAdminBillingRoutes
+
 import com.example.superadmin.services.PaymentService
+import config.AppConfig
 import io.ktor.client.HttpClient
 import io.ktor.client.engine.cio.CIO
 import io.ktor.client.plugins.contentnegotiation.ContentNegotiation as ClientContentNegotiation
@@ -18,6 +21,10 @@ import io.ktor.serialization.kotlinx.json.json
 import io.ktor.server.application.Application
 import io.ktor.server.routing.routing
 import kotlinx.serialization.json.Json
+import superadmin.client.KtorTenantInternalBillingClient
+import superadmin.repos.SuperAdminBillingRepositoryImpl
+
+import superadmin.services.SuperAdminBillingService
 
 fun Application.module() {
 
@@ -26,6 +33,7 @@ fun Application.module() {
 
     println("STEP 2")
     configureSerialization()
+    configureRouting()
 
     println("STEP 3")
     configureSecurity()
@@ -76,10 +84,29 @@ fun Application.module() {
     configureCors()
 
     accountModule(tenantSuperAdminClient)
+    val superAdminBillingRepository = SuperAdminBillingRepositoryImpl()
 
+    val tenantInternalBillingClient = KtorTenantInternalBillingClient(
+        httpClient = tenantHttpClient,
+
+        // Production / env URL
+        tenantApiBaseUrl = AppConfig.tenantApiBaseUrl,
+
+        // Local/testing URL
+        // tenantApiBaseUrl = "http://127.0.0.1:9001",
+
+        internalApiKey = AppConfig.tenantInternalApiKey.trim()
+    )
+
+    val superAdminBillingService = SuperAdminBillingService(
+        billingRepository = superAdminBillingRepository,
+        tenantInternalBillingClient = tenantInternalBillingClient
+    )
     routing {
         billingRoutes(paymentService)
-        superAdminBillingRoutes()
+//        superAdminBillingRoutes()
+        superAdminBillingRoutes(superAdminBillingService)
+
     }
 
     println("========== [BUSINESS APP STARTED SUCCESSFULLY] ==========")

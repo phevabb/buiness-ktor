@@ -1,7 +1,5 @@
 package com.example.superadmin.routes
 
-
-
 import com.example.superadmin.dto.CreateAcademicYearRequest
 import com.example.superadmin.dto.CreateAcademicYearResponse
 import com.example.superadmin.dto.DeleteAcademicYearResponse
@@ -9,28 +7,34 @@ import com.example.superadmin.dto.SimpleMessageResponse
 import com.example.superadmin.dto.UpdateAcademicYearResponse
 import com.example.superadmin.repos.BillingRepository
 import com.example.superadmin.services.PaymentService
-
+import io.ktor.http.HttpStatusCode
+import io.ktor.server.auth.authenticate
 import io.ktor.server.request.receive
 import io.ktor.server.response.respond
 import io.ktor.server.routing.Route
+import io.ktor.server.routing.delete
 import io.ktor.server.routing.get
+import io.ktor.server.routing.patch
 import io.ktor.server.routing.post
 import io.ktor.server.routing.route
-
-
-
-import io.ktor.http.HttpStatusCode
-import io.ktor.server.auth.authenticate
-import io.ktor.server.routing.delete
-
-import io.ktor.server.routing.patch
 
 fun Route.billingRoutes(
     paymentService: PaymentService
 ) {
     route("/api/billing") {
 
+        /**
+         * ============================================================
+         * CLIENT / TENANT ACCOUNT BILLING ROUTES
+         * Auth: auth-jwt
+         * ============================================================
+         */
         authenticate("auth-jwt") {
+
+            /**
+             * GET /api/billing/invoices?accountId=1
+             * GET /api/billing/invoices?tenantCode=CACTUS-273855
+             */
             get("/invoices") {
                 val accountId = call.request.queryParameters["accountId"]?.toIntOrNull()
                 val tenantCode = call.request.queryParameters["tenantCode"]
@@ -51,29 +55,8 @@ fun Route.billingRoutes(
                 call.respond(HttpStatusCode.OK, invoices)
             }
 
-
-
-            post("/academic-years") {
-                val request = call.receive<CreateAcademicYearRequest>()
-
-                val academicYearId = BillingRepository.createAcademicYearWithTerms(request)
-
-                call.respond(
-                    HttpStatusCode.Created,
-                    CreateAcademicYearResponse(
-                        message = "Academic year created successfully",
-                        academicYearId = academicYearId
-                    )
-                )
-            }
-
             /**
-             * Get current billing for an account.
-             *
-             * Normal:
              * GET /api/billing/current?accountId=1
-             *
-             * Testing future term:
              * GET /api/billing/current?accountId=1&dateEpochMillis=1789000000000
              */
             get("/current") {
@@ -87,7 +70,8 @@ fun Route.billingRoutes(
                     return@get
                 }
 
-                val dateEpochMillis = call.request.queryParameters["dateEpochMillis"]?.toLongOrNull()
+                val dateEpochMillis =
+                    call.request.queryParameters["dateEpochMillis"]?.toLongOrNull()
 
                 val billing = BillingRepository.getCurrentBillingForAccount(
                     accountId = accountId,
@@ -106,7 +90,7 @@ fun Route.billingRoutes(
             }
 
             /**
-             * Initialize Paystack payment.
+             * POST /api/billing/invoices/{invoiceId}/paystack/initialize
              */
             post("/invoices/{invoiceId}/paystack/initialize") {
                 val invoiceId = call.parameters["invoiceId"]?.toIntOrNull()
@@ -131,7 +115,7 @@ fun Route.billingRoutes(
             }
 
             /**
-             * Verify Paystack payment.
+             * GET /api/billing/paystack/verify/{reference}
              */
             get("/paystack/verify/{reference}") {
                 val reference = call.parameters["reference"]
@@ -147,10 +131,57 @@ fun Route.billingRoutes(
                 val response = paymentService.verifyPayment(reference)
                 call.respond(HttpStatusCode.OK, response)
             }
+        }
 
+        /**
+         * ============================================================
+         * SUPERADMIN BILLING CALENDAR ROUTES
+         * Auth: super-admin-jwt
+         * ============================================================
+         */
+        authenticate("super-admin-jwt") {
 
+            /**
+             * GET /api/billing/academic-years
+             * GET /api/billing/academic-years?search=2025
+             */
+            get("/academic-years") {
+                val search = call.request.queryParameters["search"]
 
+                val calendars = BillingRepository.listAcademicYearCalendars(
+                    search = search
+                )
 
+                call.respond(HttpStatusCode.OK, calendars)
+            }
+
+            /**
+             * POST /api/billing/academic-years
+             */
+            post("/academic-years") {
+                val request = call.receive<CreateAcademicYearRequest>()
+
+                try {
+                    val academicYearId = BillingRepository.createAcademicYearWithTerms(request)
+
+                    call.respond(
+                        HttpStatusCode.Created,
+                        CreateAcademicYearResponse(
+                            message = "Academic year created successfully",
+                            academicYearId = academicYearId
+                        )
+                    )
+                } catch (e: Exception) {
+                    call.respond(
+                        HttpStatusCode.BadRequest,
+                        SimpleMessageResponse(e.message ?: "Unable to create academic year")
+                    )
+                }
+            }
+
+            /**
+             * PATCH /api/billing/academic-years/{academicYearId}
+             */
             patch("/academic-years/{academicYearId}") {
                 val academicYearId = call.parameters["academicYearId"]?.toIntOrNull()
 
@@ -193,6 +224,9 @@ fun Route.billingRoutes(
                 }
             }
 
+            /**
+             * DELETE /api/billing/academic-years/{academicYearId}
+             */
             delete("/academic-years/{academicYearId}") {
                 val academicYearId = call.parameters["academicYearId"]?.toIntOrNull()
 
@@ -231,9 +265,6 @@ fun Route.billingRoutes(
                     )
                 }
             }
-
         }
-
-
     }
 }
