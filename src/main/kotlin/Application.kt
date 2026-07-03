@@ -92,8 +92,6 @@ fun Application.module() {
         // Production / env URL
         tenantApiBaseUrl = AppConfig.tenantApiBaseUrl,
 
-        // Local/testing URL
-        // tenantApiBaseUrl = "http://127.0.0.1:9001",
 
         internalApiKey = AppConfig.tenantInternalApiKey.trim()
     )

@@ -1,5 +1,7 @@
 package account
 
+
+import account.routes.accountTransactionRoutes
 import auth.authRoutes
 import com.example.account.routes.accountRoutes
 import com.example.account.routes.dashboardRoutes
@@ -11,7 +13,10 @@ import com.example.superadmin.routes.superAdminAuthRoutes   // ✅ add this
 import io.ktor.server.application.Application
 import io.ktor.server.routing.route
 import io.ktor.server.routing.routing
-               // ✅ add this
+
+import superadmin.routes.superAdminTransactionRoutes
+
+// ✅ add this
 
 fun Application.accountModule(
     tenantSuperAdminClient: TenantSuperAdminClient
@@ -34,13 +39,24 @@ fun Application.accountModule(
                 dashboardRoutes()
             }
 
+            route("/transactions") {
+                accountTransactionRoutes()
+            }
+
+
+
             // ✅ SUPER ADMIN AREA
             route("/super") {
 
                 superAdminAuthRoutes(superAdminRepo)   // ✅ LOGIN/LOGOUT here
 
-                superAdminAccountRoutes()              // ✅ protected later
+                superAdminAccountRoutes()
+
+            // ✅ protected later
             }
+
+            route("/superadmin/account-transactions") {
+                superAdminTransactionRoutes()   }
 
             route("/internal/super/tenant") {
                 superAdminTenantRoutes(tenantSuperAdminClient)

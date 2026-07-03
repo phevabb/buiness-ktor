@@ -2,6 +2,7 @@ package com.example.superadmin.client
 
 
 
+import config.AppConfig
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
 import io.ktor.client.request.header
@@ -9,6 +10,7 @@ import io.ktor.client.request.get
 import io.ktor.client.request.parameter
 import io.ktor.client.request.patch
 import io.ktor.client.request.setBody
+import io.ktor.client.statement.bodyAsText
 import io.ktor.http.ContentType
 import io.ktor.http.contentType
 import kotlinx.serialization.Serializable
@@ -35,6 +37,32 @@ class TenantSuperAdminClient(
             }
         }.body()
     }
+
+
+
+    suspend fun getTransactions(
+        tenantCode: String?,
+        status: String?,
+        paid: Boolean?
+    ): String {
+        return httpClient.get("${AppConfig.tenantApiBaseUrl}/api/internal/super/transactions") {
+            header("X-Internal-Api-Key", AppConfig.tenantInternalApiKey)
+
+            if (!tenantCode.isNullOrBlank()) {
+                parameter("tenantCode", tenantCode)
+            }
+
+            if (!status.isNullOrBlank()) {
+                parameter("status", status)
+            }
+
+            if (paid != null) {
+                parameter("paid", paid)
+            }
+        }.bodyAsText()
+    }
+
+
 
     suspend fun updateTenantStatus(
         tenantCode: String,
@@ -113,3 +141,18 @@ data class TenantStatusUpdateResponse(
     val success: Boolean,
     val message: String
 )
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

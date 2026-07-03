@@ -6,13 +6,18 @@ import org.jetbrains.exposed.v1.core.dao.id.IntIdTable
 import java.math.BigDecimal
 
 object AcademicTermsTable : IntIdTable("academic_terms") {
+
+    val termName = varchar("term_name", 100)
+
     val academicYearId = integer("academic_year_id")
+
+
+
 
     // FIRST_TERM, SECOND_TERM, THIRD_TERM
     val termCode = varchar("term_code", 30)
 
     // First Term, Second Term, Third Term
-    val termName = varchar("term_name", 100)
 
     // 1, 2, 3
     val termNumber = integer("term_number")
