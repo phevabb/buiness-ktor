@@ -21,6 +21,7 @@ import io.ktor.serialization.kotlinx.json.json
 import io.ktor.server.application.Application
 import io.ktor.server.routing.routing
 import kotlinx.serialization.json.Json
+import seo.seoRoutes
 import superadmin.client.KtorTenantInternalBillingClient
 import superadmin.repos.SuperAdminBillingRepositoryImpl
 
@@ -101,6 +102,7 @@ fun Application.module() {
         tenantInternalBillingClient = tenantInternalBillingClient
     )
     routing {
+        seoRoutes()
         billingRoutes(paymentService)
 //        superAdminBillingRoutes()
         superAdminBillingRoutes(superAdminBillingService)
