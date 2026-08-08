@@ -1,5 +1,8 @@
 package com.example.account.service
 
+import account.dto.UpdateSchoolBrandingRequest
+import account.dto.UpdateTenantPinsRequest
+import account.dto.UpdateTenantRequest
 import com.example.account.dto.AccountResponse
 
 import com.example.superadmin.dto.TenantAcademicCalendarSeed
@@ -11,16 +14,18 @@ import io.ktor.client.engine.cio.CIO
 import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
 import io.ktor.client.request.header
 import io.ktor.client.request.post
+import io.ktor.client.request.put
 import io.ktor.client.request.setBody
 import io.ktor.client.statement.bodyAsText
 import io.ktor.http.ContentType
 import io.ktor.http.contentType
+import io.ktor.http.isSuccess
 import io.ktor.serialization.kotlinx.json.json
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
+import kotlin.String
 
-
-
+// this is more of a repo
 object TenantProvisioningService {
 
     private val client = HttpClient(CIO) {
@@ -81,6 +86,115 @@ object TenantProvisioningService {
 
         return json.decodeFromString<CreateTenantResponse>(bodyText)
     }
+
+    suspend fun updateSchoolBranding(
+        tenantCode: String,
+        schoolName: String,
+        schoolLogoUrl: String?,
+        schoolMotto: String?,
+        location: String?
+    ): Boolean {
+
+        val request = UpdateSchoolBrandingRequest(
+            tenantCode = tenantCode,
+            schoolName = schoolName,
+            schoolLogoUrl = schoolLogoUrl,
+            schoolMotto = schoolMotto,
+            location = location
+        )
+
+        val response = client.put(
+            "${AppConfig.tenantApiBaseUrl}/internal/tenants/update-school-branding"
+        ) {
+
+            contentType(ContentType.Application.Json)
+
+            header(
+                "X-Internal-Api-Key",
+                AppConfig.tenantInternalApiKey
+            )
+
+            setBody(request)
+        }
+
+        return response.status.value in 200..299
+    }
+
+    suspend fun updateTenantPins(
+        tenantCode: String,
+        adminPin: String?,
+        principalPin: String?
+    ): Boolean {
+
+        val request = UpdateTenantPinsRequest(
+            tenantCode = tenantCode,
+            adminPin = adminPin,
+            principalPin = principalPin
+        )
+
+        val response = client.put(
+            "${AppConfig.tenantApiBaseUrl}/internal/tenants/update-pins"
+        ) {
+
+            contentType(ContentType.Application.Json)
+
+            header(
+                "X-Internal-Api-Key",
+                AppConfig.tenantInternalApiKey
+            )
+
+            setBody(request)
+        }
+
+        return response.status.value in 200..299
+    }
+
+
+
+
+
+    suspend fun updateTenantForAccount(
+        account: AccountResponse
+    ) {
+
+        val request = UpdateTenantRequest(
+            tenantCode = account.tenantCode,
+
+            schoolName = account.schoolName,
+            schoolLogoUrl = account.schoolLogoUrl,
+            schoolMotto = account.schoolMotto,
+
+            schoolLocation = account.location,
+
+            fullName = account.fullName,
+
+            phoneNumber = account.phoneNumber,
+
+            adminPin = account.adminPin,
+
+            principalPin = account.principalPin
+        )
+
+        val response = client.put(
+            "${AppConfig.tenantApiBaseUrl}/internal/tenants/update"
+        ) {
+
+            contentType(ContentType.Application.Json)
+
+            header(
+                "X-Internal-Api-Key",
+                AppConfig.tenantInternalApiKey
+            )
+
+            setBody(request)
+        }
+
+        if (!response.status.isSuccess()) {
+            error("Tenant update failed")
+        }
+    }
+
+
 }
 
 @Serializable

@@ -4,6 +4,8 @@ package com.example.account.routes
 
 
 
+import account.dto.UpdatePinsRequest
+import account.dto.UpdateSchoolBrandingRequest
 import io.ktor.server.request.receive
 import io.ktor.server.response.respond
 import io.ktor.server.routing.*
@@ -38,6 +40,59 @@ import io.ktor.server.routing.put
 import java.net.URLEncoder
 
 fun Route.accountRoutes() {
+
+
+    put("/update-school-branding") {
+
+        try {
+
+            val request =
+                call.receive<UpdateSchoolBrandingRequest>()
+
+            val tenantUpdated =
+                TenantProvisioningService.updateSchoolBranding(
+                    tenantCode = request.tenantCode,
+                    schoolName = request.schoolName,
+                    schoolLogoUrl = request.schoolLogoUrl,
+                    schoolMotto = request.schoolMotto,
+                    location = request.location
+                )
+
+            if (!tenantUpdated) {
+
+                throw IllegalStateException(
+                    "Failed to update tenant branding."
+                )
+            }
+
+            AccountsRepository.updateSchoolBranding(
+                tenantCode = request.tenantCode,
+                schoolName = request.schoolName,
+                schoolLogoUrl = request.schoolLogoUrl,
+                schoolMotto = request.schoolMotto,
+                location = request.location
+            )
+
+            call.respond(
+                HttpStatusCode.OK,
+                MessageResponse(
+                    "School branding updated successfully."
+                )
+            )
+
+        } catch (e: Exception) {
+
+            e.printStackTrace()
+
+            call.respond(
+                HttpStatusCode.InternalServerError,
+                MessageResponse(
+                    e.message ?: "Unable to update branding."
+                )
+            )
+        }
+    }
+
 
     post("/register") {
         try {
@@ -76,6 +131,118 @@ fun Route.accountRoutes() {
             )
         }
     }
+
+
+    put("/update-pins") {
+
+        try {
+
+            val request =
+                call.receive<UpdatePinsRequest>()
+
+            if (
+                request.adminPin.isNullOrBlank() &&
+                request.principalPin.isNullOrBlank()
+            ) {
+
+                call.respond(
+                    HttpStatusCode.BadRequest,
+                    MessageResponse(
+                        "Please provide at least one PIN."
+                    )
+                )
+
+                return@put
+            }
+
+            val tenantUpdated =
+                TenantProvisioningService.updateTenantPins(
+                    tenantCode = request.tenantCode,
+                    adminPin = request.adminPin,
+                    principalPin = request.principalPin
+                )
+
+            if (!tenantUpdated) {
+
+                throw IllegalStateException(
+                    "Failed to update pins in tenant service."
+                )
+            }
+
+            AccountsRepository.updatePins(
+                tenantCode = request.tenantCode,
+                adminPin = request.adminPin,
+                principalPin = request.principalPin
+            )
+
+            call.respond(
+                HttpStatusCode.OK,
+                MessageResponse(
+                    "Pins updated successfully."
+                )
+            )
+
+        } catch (e: Exception) {
+
+            e.printStackTrace()
+
+            call.respond(
+                HttpStatusCode.InternalServerError,
+                MessageResponse(
+                    e.message
+                        ?: "Failed to update pins."
+                )
+            )
+        }
+    }
+
+
+    get("/school-profile/{tenantCode}") {
+
+        try {
+
+            val tenantCode =
+                call.parameters["tenantCode"]
+                    ?: throw IllegalArgumentException(
+                        "Tenant code is required."
+                    )
+
+            val profile =
+                AccountsRepository.getSchoolProfile(
+                    tenantCode
+                )
+
+            if (profile == null) {
+
+                call.respond(
+                    HttpStatusCode.NotFound,
+                    MessageResponse(
+                        "School profile not found."
+                    )
+                )
+
+                return@get
+            }
+
+            call.respond(
+                HttpStatusCode.OK,
+                profile
+            )
+
+        } catch (e: Exception) {
+
+            e.printStackTrace()
+
+            call.respond(
+                HttpStatusCode.InternalServerError,
+                MessageResponse(
+                    e.message
+                        ?: "Unable to retrieve school profile."
+                )
+            )
+        }
+    }
+
 
     get("/verify-email") {
         try {

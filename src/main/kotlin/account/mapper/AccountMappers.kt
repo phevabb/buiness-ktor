@@ -10,6 +10,8 @@ fun ResultRow.toAccount(): Account =
         id = this[AccountsTable.id].value,
         email = this[AccountsTable.email],
         schoolName = this[AccountsTable.schoolName],
+        schoolLogoUrl =this[AccountsTable.schoolLogoUrl],
+        schoolMotto =this[AccountsTable.schoolMotto],
         fullName = this[AccountsTable.fullName],
         phoneNumber = this[AccountsTable.phoneNumber],
         location = this[AccountsTable.location],
@@ -77,4 +79,7 @@ fun Account.toResponse(): AccountResponse =
         principalPin = principalPin,
         defaultLocalDomain = defaultLocalDomain,
         fallbackLocalUrl = fallbackLocalUrl,
+        schoolLogoUrl=schoolLogoUrl,
+        schoolMotto = schoolMotto,
+        adminPin =adminPin,
     )

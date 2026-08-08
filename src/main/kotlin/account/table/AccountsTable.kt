@@ -6,12 +6,28 @@ package com.example.account.table
 import org.jetbrains.exposed.v1.core.dao.id.IntIdTable
 
 object AccountsTable : IntIdTable("accounts") {
+
+    val schoolName = varchar("school_name", 255)
+
+    val schoolLogoUrl = varchar("school_logo_url", 500).nullable()
+    val schoolMotto = varchar("school_motto", 255).nullable()
+    val location = varchar("location", 255).default("")
+
+
+
+
+    val principalPin = varchar("principal_pin", 50).nullable()
+
+    val adminPin = varchar("admin_pin", 50).nullable()
+
+
+
     val email = varchar("email", 255).uniqueIndex()
     val passwordHash = varchar("password_hash", 255)
-    val schoolName = varchar("school_name", 255)
+
+
     val fullName = varchar("full_name", 255)
     val phoneNumber = varchar("phone_number", 30)
-    val location = varchar("location", 255).default("")
     val tenantCode = varchar("tenant_code", 100).uniqueIndex()
     val academicYear = varchar("academic_year", 20)
     val estimatedStudents = integer("estimated_students")
@@ -35,9 +51,6 @@ object AccountsTable : IntIdTable("accounts") {
     val tenantStatus = varchar("tenant_status", 50).nullable()
 
     val principalLoginUserId = varchar("principal_login_user_id", 100).nullable()
-    val principalPin = varchar("principal_pin", 50).nullable()
-
-    val adminPin = varchar("admin_pin", 50).nullable()
     val adminLoginUserId = varchar("admin_login_user_id", 50).nullable()
 
 

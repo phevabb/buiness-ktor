@@ -56,6 +56,8 @@ data class CreateAccountRequest(
 @Serializable
 data class UpdateAccountRequest(
     val schoolName: String? = null,
+    val schoolMotto: String? = null,
+    val schoolLogoUrl: String? = null,
     val fullName: String? = null,
     val phoneNumber: String? = null,
     val estimatedStudents: Int? = null,
@@ -69,6 +71,8 @@ data class AccountResponse(
     val id: Int,
     val email: String,
     val schoolName: String,
+    val schoolLogoUrl: String?,
+    val schoolMotto: String?,
     val fullName: String,
     val phoneNumber: String,
     val location: String,
@@ -95,6 +99,7 @@ data class AccountResponse(
     val fallbackLocalUrl: String?,
 
     val tenantStatus: String?,
+    val adminPin: String?,
 
     val principalLoginUserId: String?,
     val principalPin: String?

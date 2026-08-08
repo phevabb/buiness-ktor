@@ -3,6 +3,7 @@ package com.example.account.repo
 
 
 
+import account.dto.SchoolProfileResponse
 import com.example.account.dto.AccountResponse
 import com.example.account.dto.CreateAccountRequest
 import com.example.account.dto.UpdateAccountRequest
@@ -23,6 +24,7 @@ import kotlin.random.Random
 
 object AccountsRepository {
 
+
     private const val PRICE_PER_STUDENT_PER_TERM_PESEWAS = 500L
     private const val EMAIL_TOKEN_EXPIRY_MILLIS = 24L * 60L * 60L * 1000L
 
@@ -31,6 +33,89 @@ object AccountsRepository {
         val emailVerificationToken: String
     )
 
+
+    fun updateSchoolBranding(
+        tenantCode: String,
+        schoolName: String,
+        schoolLogoUrl: String?,
+        schoolMotto: String?,
+        location: String?
+    ) {
+
+        transaction {
+
+            AccountsTable.update(
+                {
+                    AccountsTable.tenantCode eq tenantCode
+                }
+            ) {
+
+                it[AccountsTable.schoolName] =
+                    schoolName
+
+                it[AccountsTable.schoolLogoUrl] =
+                    schoolLogoUrl
+
+                it[AccountsTable.schoolMotto] =
+                    schoolMotto
+
+                it[AccountsTable.location] =
+                    location ?: ""
+            }
+        }
+    }
+
+
+    fun getSchoolProfile(
+        tenantCode: String
+    ): SchoolProfileResponse? {
+
+        return transaction {
+
+            AccountsTable
+                .selectAll()
+                .where {
+                    AccountsTable.tenantCode eq tenantCode
+                }
+                .singleOrNull()
+                ?.let { row ->
+
+                    SchoolProfileResponse(
+                        schoolName = row[AccountsTable.schoolName],
+                        schoolLogoUrl = row[AccountsTable.schoolLogoUrl],
+                        schoolMotto = row[AccountsTable.schoolMotto],
+                        location = row[AccountsTable.location]
+                    )
+                }
+        }
+    }
+
+
+
+    fun updatePins(
+        tenantCode: String,
+        adminPin: String?,
+        principalPin: String?
+    ) {
+
+        transaction {
+
+            AccountsTable.update(
+                {
+                    AccountsTable.tenantCode eq tenantCode
+                }
+            ) {
+
+                adminPin?.let { pin ->
+                    it[AccountsTable.adminPin] = pin
+                }
+
+                principalPin?.let { pin ->
+                    it[AccountsTable.principalPin] = pin
+                }
+            }
+        }
+    }
 
 
     fun findByEmail(email: String): AccountLoginData? {

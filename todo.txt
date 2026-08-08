@@ -17,17 +17,6 @@ Application.kt  in kotlin/application.kt   search // local
 todo
 ----
 1. change the ui of the email content sent  DONE
-2. make sure to update the login url in accounts routes for prod.
-3. question AI .... I use this :
-            val smtpHost: String
-            get() = "smtp.gmail.com"
-
-what if i switch to nacmecheap email
-
-
-
-
-
 
 keys to put in .env
 -------------------

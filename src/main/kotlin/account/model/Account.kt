@@ -32,5 +32,7 @@ data class Account(
     val principalLoginUserId: String?,
     val principalPin: String?,
     val adminPin: String?,
-    val adminLoginUserId: String?
+    val adminLoginUserId: String?,
+    val schoolLogoUrl: String?,
+    val schoolMotto: String?
 )
