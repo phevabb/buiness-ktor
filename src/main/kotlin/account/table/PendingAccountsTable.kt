@@ -64,7 +64,7 @@ object PendingAccountsTable : IntIdTable("pending_accounts") {
 
     val emailVerificationTokenHash =
         varchar(
-            name = "email_verification_tok*n_hash",
+            name = "email_verification_token_hash",
             length = 255
         ).uniqueIndex()
 
