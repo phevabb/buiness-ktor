@@ -24,25 +24,14 @@ import kotlin.random.Random
 
 object AccountsRepository {
 
-
-    private const val PRICE_PER_STUDENT_PER_TERM_PESEWAS = 500L
-    private const val EMAIL_TOKEN_EXPIRY_MILLIS = 24L * 60L * 60L * 1000L
-
-    data class CreatedAccountResult(
-        val account: AccountResponse,
-        val emailVerificationToken: String
-    )
-
-
-    fun updateSchoolBranding(
+    fun updateSchoolBrandingWithoutLogo(
         tenantCode: String,
         schoolName: String,
-        schoolLogoUrl: String?,
         schoolMotto: String?,
         location: String?
-    ) {
+    ): Boolean {
 
-        transaction {
+        return transaction {
 
             AccountsTable.update(
                 {
@@ -53,17 +42,38 @@ object AccountsRepository {
                 it[AccountsTable.schoolName] =
                     schoolName
 
-                it[AccountsTable.schoolLogoUrl] =
-                    schoolLogoUrl
-
                 it[AccountsTable.schoolMotto] =
                     schoolMotto
 
                 it[AccountsTable.location] =
                     location ?: ""
-            }
+            } > 0
         }
     }
+
+
+
+
+
+    fun updateSchoolLogoForTenant(
+        tenantCode: String,
+        schoolLogoUrl: String
+    ): Boolean {
+
+        return transaction {
+
+            AccountsTable.update(
+                {
+                    AccountsTable.tenantCode eq tenantCode
+                }
+            ) {
+
+                it[AccountsTable.schoolLogoUrl] =
+                    schoolLogoUrl
+            } > 0
+        }
+    }
+
 
 
     fun getSchoolProfile(
@@ -77,18 +87,60 @@ object AccountsRepository {
                 .where {
                     AccountsTable.tenantCode eq tenantCode
                 }
+                .limit(1)
                 .singleOrNull()
                 ?.let { row ->
 
                     SchoolProfileResponse(
-                        schoolName = row[AccountsTable.schoolName],
-                        schoolLogoUrl = row[AccountsTable.schoolLogoUrl],
-                        schoolMotto = row[AccountsTable.schoolMotto],
-                        location = row[AccountsTable.location]
+                        schoolName =
+                            row[AccountsTable.schoolName],
+
+                        schoolLogoUrl =
+                            row[AccountsTable.schoolLogoUrl],
+
+                        schoolMotto =
+                            row[AccountsTable.schoolMotto],
+
+                        location =
+                            row[AccountsTable.location]
                     )
                 }
         }
     }
+
+
+    private const val PRICE_PER_STUDENT_PER_TERM_PESEWAS = 500L
+    private const val EMAIL_TOKEN_EXPIRY_MILLIS = 24L * 60L * 60L * 1000L
+
+    data class CreatedAccountResult(
+        val account: AccountResponse,
+        val emailVerificationToken: String
+    )
+
+
+
+
+
+
+    fun clearSchoolLogoForTenant(
+        tenantCode: String
+    ): Boolean {
+
+        return transaction {
+
+            AccountsTable.update(
+                {
+                    AccountsTable.tenantCode eq tenantCode
+                }
+            ) {
+
+                it[schoolLogoUrl] = null
+            } > 0
+        }
+    }
+
+
+
 
 
 

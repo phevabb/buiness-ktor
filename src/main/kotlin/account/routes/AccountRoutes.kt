@@ -6,6 +6,8 @@ package com.example.account.routes
 
 import account.dto.UpdatePinsRequest
 import account.dto.UpdateSchoolBrandingRequest
+import account.utils.normalizeTenantCodeForTenantService
+
 import io.ktor.server.request.receive
 import io.ktor.server.response.respond
 import io.ktor.server.routing.*
@@ -28,7 +30,10 @@ import config.AppConfig
 import io.ktor.http.ContentType
 
 import io.ktor.http.HttpStatusCode
+import io.ktor.http.content.PartData
+import io.ktor.http.content.forEachPart
 import io.ktor.server.request.path
+import io.ktor.server.request.receiveMultipart
 import io.ktor.server.request.uri
 import io.ktor.server.response.respondText
 
@@ -36,24 +41,229 @@ import io.ktor.server.routing.Route
 import io.ktor.server.routing.get
 import io.ktor.server.routing.post
 import io.ktor.server.routing.put
+import io.ktor.utils.io.readRemaining
+import kotlinx.io.readByteArray
 
 import java.net.URLEncoder
 
 fun Route.accountRoutes() {
 
+    delete("/school-logo/{tenantCode}") {
+
+        try {
+
+            val tenantCode =
+                call.parameters["tenantCode"]
+                    ?: return@delete call.respond(
+                        HttpStatusCode.BadRequest,
+                        MessageResponse("Tenant code is required.")
+                    )
+
+            val tenantDeleted =
+                TenantProvisioningService.deleteSchoolLogo(
+                    tenantCode = tenantCode
+                )
+
+            if (!tenantDeleted) {
+
+                return@delete call.respond(
+                    HttpStatusCode.InternalServerError,
+                    MessageResponse(
+                        "Failed to delete school logo from tenant service."
+                    )
+                )
+            }
+
+            AccountsRepository.clearSchoolLogoForTenant(
+                tenantCode = tenantCode
+            )
+
+            call.respond(
+                HttpStatusCode.OK,
+                MessageResponse(
+                    "School logo deleted successfully."
+                )
+            )
+
+        } catch (e: Exception) {
+
+            e.printStackTrace()
+
+            call.respond(
+                HttpStatusCode.InternalServerError,
+                MessageResponse(
+                    e.message
+                        ?: "Failed to delete school logo."
+                )
+            )
+        }
+    }
+
+
+
+    post("/upload-school-logo/{tenantCode}") {
+
+        try {
+
+            val businessTenantCode =
+                call.parameters["tenantCode"]
+                    ?: return@post call.respond(
+                        HttpStatusCode.BadRequest,
+                        MessageResponse(
+                            "Tenant code missing"
+                        )
+                    )
+
+            val tenantServiceCode =
+                normalizeTenantCodeForTenantService(
+                    businessTenantCode
+                )
+
+            println(
+                "Business tenantCode = $businessTenantCode"
+            )
+
+            println(
+                "Tenant service code = $tenantServiceCode"
+            )
+
+            var imageBytes: ByteArray? = null
+
+            var fileName = "logo.jpg"
+
+            var contentType = "image/jpeg"
+
+            val multipart =
+                call.receiveMultipart()
+
+            multipart.forEachPart { part ->
+
+                when (part) {
+
+                    is PartData.FileItem -> {
+
+                        fileName =
+                            part.originalFileName
+                                ?: "logo.jpg"
+
+                        contentType =
+                            part.contentType?.toString()
+                                ?: "image/jpeg"
+
+                        imageBytes =
+                            part.provider()
+                                .readRemaining()
+                                .readByteArray()
+                    }
+
+                    else -> {}
+                }
+
+                part.dispose()
+            }
+
+            if (
+                imageBytes == null ||
+                imageBytes!!.isEmpty()
+            ) {
+
+                return@post call.respond(
+                    HttpStatusCode.BadRequest,
+                    MessageResponse(
+                        "No image uploaded"
+                    )
+                )
+            }
+
+            val uploadResponse =
+                TenantProvisioningService.uploadSchoolLogo(
+                    tenantCode = tenantServiceCode,
+                    imageBytes = imageBytes!!,
+                    fileName = fileName,
+                    contentType = contentType
+                )
+
+            println(
+                "upload response is $uploadResponse"
+            )
+
+            val updated =
+                AccountsRepository.updateSchoolLogoForTenant(
+                    tenantCode = businessTenantCode,
+                    schoolLogoUrl = uploadResponse.schoolLogoUrl
+                )
+
+            println(
+                "update response is $updated"
+            )
+
+            if (!updated) {
+
+                return@post call.respond(
+                    HttpStatusCode.NotFound,
+                    MessageResponse(
+                        "No account found for tenant code: $businessTenantCode"
+                    )
+                )
+            }
+
+            call.respond(
+                HttpStatusCode.OK,
+                uploadResponse
+            )
+
+        } catch (e: Exception) {
+
+            e.printStackTrace()
+
+            call.respond(
+                HttpStatusCode.InternalServerError,
+                MessageResponse(
+                    e.message ?: "Upload failed"
+                )
+            )
+        }
+    }
 
     put("/update-school-branding") {
 
         try {
 
+            println("✅ [update-school-branding] Route hit")
+            println(
+                "✅ [update-school-branding] Content-Type = ${
+                    call.request.headers["Content-Type"]
+                }"
+            )
+
             val request =
                 call.receive<UpdateSchoolBrandingRequest>()
+
+            if (request.tenantCode.isBlank()) {
+
+                return@put call.respond(
+                    HttpStatusCode.BadRequest,
+                    MessageResponse(
+                        "Tenant code is required."
+                    )
+                )
+            }
+
+            if (request.schoolName.isBlank()) {
+
+                return@put call.respond(
+                    HttpStatusCode.BadRequest,
+                    MessageResponse(
+                        "School name is required."
+                    )
+                )
+            }
 
             val tenantUpdated =
                 TenantProvisioningService.updateSchoolBranding(
                     tenantCode = request.tenantCode,
                     schoolName = request.schoolName,
-                    schoolLogoUrl = request.schoolLogoUrl,
+                    schoolLogoUrl = null,
                     schoolMotto = request.schoolMotto,
                     location = request.location
                 )
@@ -65,10 +275,9 @@ fun Route.accountRoutes() {
                 )
             }
 
-            AccountsRepository.updateSchoolBranding(
+            AccountsRepository.updateSchoolBrandingWithoutLogo(
                 tenantCode = request.tenantCode,
                 schoolName = request.schoolName,
-                schoolLogoUrl = request.schoolLogoUrl,
                 schoolMotto = request.schoolMotto,
                 location = request.location
             )
@@ -195,6 +404,10 @@ fun Route.accountRoutes() {
             )
         }
     }
+
+
+
+
 
 
     get("/school-profile/{tenantCode}") {

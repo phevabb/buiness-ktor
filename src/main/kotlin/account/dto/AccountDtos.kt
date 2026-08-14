@@ -123,3 +123,4 @@ data class MessageResponse(
 data class ResendVerificationRequest(
     val email: String
 )
+

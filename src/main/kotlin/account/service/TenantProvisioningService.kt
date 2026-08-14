@@ -1,5 +1,6 @@
 package com.example.account.service
 
+import account.dto.SchoolLogoUploadResponse
 import account.dto.UpdateSchoolBrandingRequest
 import account.dto.UpdateTenantPinsRequest
 import account.dto.UpdateTenantRequest
@@ -24,9 +25,96 @@ import io.ktor.serialization.kotlinx.json.json
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 import kotlin.String
+import io.ktor.client.request.delete
+import io.ktor.client.request.forms.formData
+import io.ktor.client.request.forms.submitFormWithBinaryData
+import io.ktor.http.Headers
+import io.ktor.http.HttpHeaders
+import jdk.javadoc.internal.doclets.formats.html.markup.HtmlStyle
 
 // this is more of a repo
 object TenantProvisioningService {
+
+    suspend fun uploadSchoolLogo(
+        tenantCode: String,
+        imageBytes: ByteArray,
+        fileName: String,
+        contentType: String
+    ): SchoolLogoUploadResponse {
+
+        val response =
+            client.submitFormWithBinaryData(
+
+                url =
+                    "${AppConfig.tenantApiBaseUrl}/internal/tenants/upload-school-logo/$tenantCode",
+
+                formData = formData {
+
+                    append(
+                        "file",
+                        imageBytes,
+                        Headers.build {
+
+                            append(
+                                HttpHeaders.ContentDisposition,
+                                "filename=\"$fileName\""
+                            )
+
+                            append(
+                                HttpHeaders.ContentType,
+                                contentType
+                            )
+                        }
+                    )
+                }
+
+            ) {
+
+                header(
+                    "X-Internal-Api-Key",
+                    AppConfig.tenantInternalApiKey
+                )
+            }
+
+        val bodyText =
+            response.bodyAsText()
+
+        println(
+            "Tenant logo upload status = ${response.status}"
+        )
+
+        println(
+            "Tenant logo upload body = $bodyText"
+        )
+
+        if (!response.status.isSuccess()) {
+
+            throw IllegalStateException(
+                "Tenant logo upload failed. Status: ${response.status.value}. Body: $bodyText"
+            )
+        }
+
+        return json.decodeFromString<SchoolLogoUploadResponse>(
+            bodyText
+        )
+    }
+
+    suspend fun deleteSchoolLogo(
+        tenantCode: String
+    ): Boolean {
+
+        val response = client.delete(
+            "${AppConfig.tenantApiBaseUrl}/internal/tenants/school-logo/$tenantCode"
+        ) {
+
+            header(
+                "X-Internal-Api-Key",
+                AppConfig.tenantInternalApiKey
+            )
+        }
+
+        return response.status.value in 200..299
+    }
 
     private val client = HttpClient(CIO) {
         install(ContentNegotiation) {
@@ -119,7 +207,6 @@ object TenantProvisioningService {
 
         return response.status.value in 200..299
     }
-
     suspend fun updateTenantPins(
         tenantCode: String,
         adminPin: String?,
@@ -196,6 +283,8 @@ object TenantProvisioningService {
 
 
 }
+
+
 
 @Serializable
 data class CreateTenantRequest(
