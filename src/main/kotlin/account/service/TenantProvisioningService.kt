@@ -178,9 +178,9 @@ object TenantProvisioningService {
     suspend fun updateSchoolBranding(
         tenantCode: String,
         schoolName: String,
-        schoolLogoUrl: String?,
-        schoolMotto: String?,
-        location: String?
+        schoolLogoUrl: String? = null,
+        schoolMotto: String? = null,
+        location: String? = null
     ): Boolean {
 
         val request = UpdateSchoolBrandingRequest(
@@ -207,6 +207,9 @@ object TenantProvisioningService {
 
         return response.status.value in 200..299
     }
+
+
+
     suspend fun updateTenantPins(
         tenantCode: String,
         adminPin: String?,
