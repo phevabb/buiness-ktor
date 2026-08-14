@@ -6,6 +6,7 @@ package com.example.account.routes
 
 import account.dto.UpdatePinsRequest
 import account.dto.UpdateSchoolBrandingRequest
+import account.repo.PendingAccountsRepository
 import account.utils.normalizeTenantCodeForTenantService
 
 import io.ktor.server.request.receive
@@ -304,39 +305,156 @@ fun Route.accountRoutes() {
 
 
     post("/register") {
+
         try {
-            val req = call.receive<CreateAccountRequest>()
 
-            val result = AccountsRepository.create(req)
+            println("====================================================")
+            println("📝 [REGISTER] Registration request received")
+            println("====================================================")
 
-            val verificationUrl = buildVerificationUrl(
-                token = result.emailVerificationToken
+            val req =
+                call.receive<CreateAccountRequest>()
+
+            /*
+             * Use the same validation logic you already use.
+             * Change validateCreateRequest from private to public/internal,
+             * or call your existing validation service here.
+             */
+            AccountsRepository.validateCreateRequest(
+                req
             )
 
-            AccountEmailService.sendVerificationEmail(
-                to = result.account.email,
-                schoolName = result.account.schoolName,
-                verificationUrl = verificationUrl
+            val normalizedEmail =
+                req.email
+                    .trim()
+                    .lowercase()
+
+            println(
+                "📝 [REGISTER] Normalized email = $normalizedEmail"
+            )
+
+            /*
+             * Only a permanent account prevents registration.
+             * A pending registration does not prevent registration.
+             */
+            val permanentAccountExists =
+                AccountsRepository.emailExists(
+                    normalizedEmail
+                )
+
+            if (permanentAccountExists) {
+
+                println(
+                    "❌ [REGISTER] Permanent account already exists"
+                )
+
+                return@post call.respond(
+                    HttpStatusCode.Conflict,
+                    MessageResponse(
+                        "An account with this email already exists."
+                    )
+                )
+            }
+
+            /*
+             * If there is an existing pending registration,
+             * it is updated and its old token is replaced.
+             */
+            val pendingResult =
+                PendingAccountsRepository.createOrReplacePending(
+                    req
+                )
+
+            val verificationUrl =
+                buildVerificationUrl(
+                    token =
+                        pendingResult.verificationToken
+                )
+
+            println(
+                "📧 [REGISTER] Sending verification email to ${pendingResult.email}"
+            )
+
+            try {
+
+                AccountEmailService.sendVerificationEmail(
+                    to =
+                        pendingResult.email,
+
+                    schoolName =
+                        pendingResult.schoolName,
+
+                    verificationUrl =
+                        verificationUrl
+                )
+
+            } catch (emailError: Exception) {
+
+                println(
+                    "❌ [REGISTER] Verification email could not be sent: ${emailError.message}"
+                )
+
+                emailError.printStackTrace()
+
+                /*
+                 * Keep the pending registration.
+                 * Registering again will replace the token and retry email delivery.
+                 */
+                return@post call.respond(
+                    HttpStatusCode.ServiceUnavailable,
+                    MessageResponse(
+                        "Your registration was saved, but the verification email could not be sent. Please try registering again shortly."
+                    )
+                )
+            }
+
+            val message =
+                if (
+                    pendingResult.replacedExistingRegistration
+                ) {
+                    "Your pending registration was updated. A new verification email has been sent."
+                } else {
+                    "Verification email sent. Please verify your email to create the school account."
+                }
+
+            println(
+                "✅ [REGISTER] Pending registration saved successfully"
             )
 
             call.respond(
-                HttpStatusCode.Created,
-                RegisterAccountResponse(
-                    account = result.account,
-                    message = "Account created. Please verify your email to activate the school account."
+                HttpStatusCode.Accepted,
+                MessageResponse(
+                    message
                 )
             )
+
         } catch (e: IllegalArgumentException) {
+
+            println(
+                "❌ [REGISTER] Validation failed: ${e.message}"
+            )
+
             call.respond(
                 HttpStatusCode.BadRequest,
-                MessageResponse(e.message ?: "Invalid registration request.")
+                MessageResponse(
+                    e.message
+                        ?: "Invalid registration request."
+                )
             )
+
         } catch (e: Exception) {
+
+            println(
+                "❌ [REGISTER] Unexpected error: ${e.message}"
+            )
+
             e.printStackTrace()
 
             call.respond(
                 HttpStatusCode.InternalServerError,
-                MessageResponse("Something went wrong. Please try again.")
+                MessageResponse(
+                    "Something went wrong. Please try again."
+                )
             )
         }
     }
@@ -458,154 +576,318 @@ fun Route.accountRoutes() {
 
 
     get("/verify-email") {
+
         try {
 
-            val token = call.request.queryParameters["token"]
-
+            val token =
+                call.request
+                    .queryParameters["token"]
 
             if (token.isNullOrBlank()) {
 
-
                 call.respondText(
-                    text = buildVerificationErrorPage(
-                        title = "Verification link missing",
-                        message = "The verification link is missing a valid token. Please request a new verification email."
-                    ),
-                    contentType = ContentType.Text.Html,
-                    status = HttpStatusCode.BadRequest
+                    text =
+                        buildVerificationErrorPage(
+                            title =
+                                "Verification link missing",
+
+                            message =
+                                "The verification link is missing a valid token. Please register again to receive a new verification email."
+                        ),
+
+                    contentType =
+                        ContentType.Text.Html,
+
+                    status =
+                        HttpStatusCode.BadRequest
                 )
+
                 return@get
             }
 
-            println("✅ [VERIFY-EMAIL] Token received, calling AccountsRepository.verifyEmail(token)")
-            val account = AccountsRepository.verifyEmail(token)
+            println("====================================================")
+            println("✅ [VERIFY-EMAIL] Verification request received")
+            println("====================================================")
 
+            /*
+             * Find and validate the pending registration.
+             * No permanent account exists yet.
+             */
+            val pendingAccount =
+                PendingAccountsRepository
+                    .findByVerificationToken(
+                        token
+                    )
+
+            println(
+                "✅ [VERIFY-EMAIL] Valid pending registration found for ${pendingAccount.email}"
+            )
+
+            /*
+             * Create the permanent account only now,
+             * after the token has been validated.
+             */
+            val account =
+                AccountsRepository.createVerifiedAccount(
+                    pendingAccount
+                )
+
+            println(
+                "✅ [VERIFY-EMAIL] Permanent verified account created"
+            )
+
+            /*
+             * Delete the pending record now that the permanent
+             * account has been created.
+             */
+            val pendingDeleted =
+                PendingAccountsRepository.deleteById(
+                    pendingAccount.id
+                )
+
+            println(
+                "✅ [VERIFY-EMAIL] Pending registration deleted = $pendingDeleted"
+            )
 
             try {
 
-
                 val tenantResponse =
-                    TenantProvisioningService.createTenantForAccount(account)
+                    TenantProvisioningService
+                        .createTenantForAccount(
+                            account
+                        )
 
-                println("✅ [VERIFY-EMAIL] TenantProvisioningService.createTenantForAccount(account) succeeded")
+                println(
+                    "✅ [VERIFY-EMAIL] Tenant creation succeeded"
+                )
 
-                println("tenant data $tenantResponse ")
+                println(
+                    "✅ [VERIFY-EMAIL] Tenant response = $tenantResponse"
+                )
 
                 val updatedAccount =
-                    AccountsRepository.saveTenantProvisioningSuccess(
-                        accountId = account.id,
-                        tenantResponse = tenantResponse
-                    )
+                    AccountsRepository
+                        .saveTenantProvisioningSuccess(
+                            accountId =
+                                account.id,
+
+                            tenantResponse =
+                                tenantResponse
+                        )
+
                 println("====================================================")
-                println("🧾 [VERIFY-EMAIL] Creating initial free-trial invoice...")
+                println("🧾 [VERIFY-EMAIL] Creating trial invoice")
                 println("====================================================")
 
-                val trialInvoiceCreated = BillingRepository.createInitialTrialInvoiceForNewAccount(
-                    accountId = updatedAccount.id,
-                    dateEpochMillis = System.currentTimeMillis()
+                val trialInvoiceCreated =
+                    BillingRepository
+                        .createInitialTrialInvoiceForNewAccount(
+                            accountId =
+                                updatedAccount.id,
+
+                            dateEpochMillis =
+                                System.currentTimeMillis()
+                        )
+
+                println(
+                    "✅ [VERIFY-EMAIL] Trial invoice created = $trialInvoiceCreated"
                 )
 
-                println("✅ [VERIFY-EMAIL] trialInvoiceCreated = $trialInvoiceCreated")
+                val loginUrl =
+                    System.getenv("LOGIN_URL")
+                        ?: "http://localhost:5173/auth/login"
 
-                println("✅ [VERIFY-EMAIL] AccountsRepository.saveTenantProvisioningSuccess(...) succeeded")
-                println("🧾 [VERIFY-EMAIL] updatedAccount.id = ${updatedAccount.id}")
-                println("🧾 [VERIFY-EMAIL] updatedAccount.schoolName = ${updatedAccount.schoolName}")
-                println("🧾 [VERIFY-EMAIL] updatedAccount.tenantCode = ${updatedAccount.tenantCode}")
-                println("🧾 [VERIFY-EMAIL] updatedAccount.tenantSchema = ${updatedAccount.tenantSchema}")
-                println("🧾 [VERIFY-EMAIL] updatedAccount.defaultDomain = ${updatedAccount.defaultDomain}")
-                println("🧾 [VERIFY-EMAIL] updatedAccount.principalLoginUserId = ${updatedAccount.principalLoginUserId}")
-                println("🧾 [VERIFY-EMAIL] updatedAccount.principalPin = ${updatedAccount.principalPin}")
-
-                val loginUrl = System.getenv("LOGIN_URL") ?: "http://localhost:5173/auth/login"
-
-
-
-                println("🌐 [VERIFY-EMAIL] loginUrl = $loginUrl")
-                println("📤 [VERIFY-EMAIL] Responding with 200 OK verification success page")
+                /*
+                 * Production example:
+                 * val loginUrl =
+                 *     System.getenv("LOGIN_URL")
+                 *         ?: "https://your-production-domain.com/auth/login"
+                 *
+                 * // Local/testing:
+                 * // val loginUrl =
+                 * //     "http://localhost:5173/auth/login"
+                 */
 
                 call.respondText(
-                    text = buildVerificationSuccessPage(
-                        schoolName = updatedAccount.schoolName,
-                        tenantCode = updatedAccount.tenantCode,
-                        tenantSchema = updatedAccount.tenantSchema ?: "",
-                        defaultDomain = updatedAccount.defaultDomain ?: "",
-                        principalLoginUserId = updatedAccount.principalLoginUserId ?: "",
-                        principalPin = updatedAccount.principalPin ?: "",
-                        loginUrl = loginUrl
-                    ),
-                    contentType = ContentType.Text.Html,
-                    status = HttpStatusCode.OK
+                    text =
+                        buildVerificationSuccessPage(
+                            schoolName =
+                                updatedAccount.schoolName,
+
+                            tenantCode =
+                                updatedAccount.tenantCode,
+
+                            tenantSchema =
+                                updatedAccount.tenantSchema
+                                    ?: "",
+
+                            defaultDomain =
+                                updatedAccount.defaultDomain
+                                    ?: "",
+
+                            principalLoginUserId =
+                                updatedAccount.principalLoginUserId
+                                    ?: "",
+
+                            principalPin =
+                                updatedAccount.principalPin
+                                    ?: "",
+
+                            loginUrl =
+                                loginUrl
+                        ),
+
+                    contentType =
+                        ContentType.Text.Html,
+
+                    status =
+                        HttpStatusCode.OK
                 )
 
-                println("✅ [VERIFY-EMAIL] Success page sent successfully")
+                println(
+                    "✅ [VERIFY-EMAIL] Success page sent"
+                )
 
             } catch (tenantError: Exception) {
 
+                println(
+                    "❌ [VERIFY-EMAIL] Tenant provisioning failed: ${tenantError.message}"
+                )
+
                 tenantError.printStackTrace()
-                println("====================================================")
 
                 try {
-                    println("💾 [VERIFY-EMAIL] Saving tenant provisioning failure...")
-                    AccountsRepository.saveTenantProvisioningFailure(
-                        accountId = account.id,
-                        errorMessage = tenantError.message ?: "Tenant creation failed."
+
+                    AccountsRepository
+                        .saveTenantProvisioningFailure(
+                            accountId =
+                                account.id,
+
+                            errorMessage =
+                                tenantError.message
+                                    ?: "Tenant creation failed."
+                        )
+
+                    println(
+                        "✅ [VERIFY-EMAIL] Provisioning failure saved"
                     )
-                    println("✅ [VERIFY-EMAIL] Tenant provisioning failure saved successfully")
+
                 } catch (saveFailureError: Exception) {
+
+                    println(
+                        "❌ [VERIFY-EMAIL] Failed saving provisioning error: ${saveFailureError.message}"
+                    )
 
                     saveFailureError.printStackTrace()
                 }
 
-                println("📤 [VERIFY-EMAIL] Responding with 502 BadGateway partial success page")
-
                 call.respondText(
-                    text = buildVerificationPartialSuccessPage(
-                        schoolName = account.schoolName,
-                        supportEmail = "support@phenasystems.com"
-                    ),
-                    contentType = ContentType.Text.Html,
-                    status = HttpStatusCode.BadGateway
-                )
+                    text =
+                        buildVerificationPartialSuccessPage(
+                            schoolName =
+                                account.schoolName,
 
-                println("⚠️ [VERIFY-EMAIL] Partial success page sent")
+                            supportEmail =
+                                "support@phenasystems.com"
+                        ),
+
+                    contentType =
+                        ContentType.Text.Html,
+
+                    status =
+                        HttpStatusCode.BadGateway
+                )
             }
 
         } catch (e: IllegalArgumentException) {
-            println("====================================================")
 
-            e.printStackTrace()
-            println("====================================================")
-
-            println("📤 [VERIFY-EMAIL] Responding with 400 BadRequest verification error page")
-
-            call.respondText(
-                text = buildVerificationErrorPage(
-                    title = "Verification failed",
-                    message = e.message ?: "This verification link is invalid or has expired."
-                ),
-                contentType = ContentType.Text.Html,
-                status = HttpStatusCode.BadRequest
+            println(
+                "❌ [VERIFY-EMAIL] Verification failed: ${e.message}"
             )
 
-            println("⚠️ [VERIFY-EMAIL] Verification failed page sent")
+            e.printStackTrace()
+
+            call.respondText(
+                text =
+                    buildVerificationErrorPage(
+                        title =
+                            "Verification failed",
+
+                        message =
+                            e.message
+                                ?: "This verification link is invalid or has expired."
+                    ),
+
+                contentType =
+                    ContentType.Text.Html,
+
+                status =
+                    HttpStatusCode.BadRequest
+            )
 
         } catch (e: Exception) {
 
-            e.printStackTrace()
-            println("====================================================")
-
-            println("📤 [VERIFY-EMAIL] Responding with 500 InternalServerError")
-
-            call.respondText(
-                text = buildVerificationErrorPage(
-                    title = "Something went wrong",
-                    message = "We could not verify your account at the moment. Please try again shortly."
-                ),
-                contentType = ContentType.Text.Html,
-                status = HttpStatusCode.InternalServerError
+            println(
+                "❌ [VERIFY-EMAIL] Unexpected error: ${e.message}"
             )
 
-            println("🔥 [VERIFY-EMAIL] Internal server error page sent")
+            e.printStackTrace()
+
+            call.respondText(
+                text =
+                    buildVerificationErrorPage(
+                        title =
+                            "Something went wrong",
+
+                        message =
+                            "We could not verify your account at the moment. Please try again shortly."
+                    ),
+
+                contentType =
+                    ContentType.Text.Html,
+
+                status =
+                    HttpStatusCode.InternalServerError
+            )
+        }
+    }
+
+
+    get("/pending-accounts") {
+
+        try {
+
+            println("==============================================")
+            println("📋 [PENDING ACCOUNTS] Request received")
+            println("==============================================")
+
+            val pendingAccounts =
+                PendingAccountsRepository
+                    .findAllPendingAccounts()
+
+            println(
+                "✅ [PENDING ACCOUNTS] Found ${pendingAccounts.size} pending accounts"
+            )
+
+            call.respond(
+                HttpStatusCode.OK,
+                pendingAccounts
+            )
+
+        } catch (e: Exception) {
+
+            println(
+                "❌ [PENDING ACCOUNTS] Failed: ${e.message}"
+            )
+
+            e.printStackTrace()
+
+            call.respond(
+                HttpStatusCode.InternalServerError,
+                MessageResponse(
+                    "Unable to retrieve pending accounts."
+                )
+            )
         }
     }
 

@@ -1,6 +1,7 @@
 package config
 
 
+import account.table.PendingAccountsTable
 import com.example.account.table.AccountsTable
 import com.example.auth.table.EmailVerificationTokensTable
 import com.example.auth.table.PasswordResetTokensTable
@@ -24,6 +25,7 @@ object AppTables {
         AcademicTermsTable,
         SubscriptionInvoicesTable,
         PaymentTransactionsTable,
+        PendingAccountsTable,
 
         )
 }

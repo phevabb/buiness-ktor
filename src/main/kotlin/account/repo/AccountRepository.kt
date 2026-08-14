@@ -4,6 +4,7 @@ package com.example.account.repo
 
 
 import account.dto.SchoolProfileResponse
+import account.model.PendingAccountData
 import com.example.account.dto.AccountResponse
 import com.example.account.dto.CreateAccountRequest
 import com.example.account.dto.UpdateAccountRequest
@@ -23,6 +24,151 @@ import org.jetbrains.exposed.v1.jdbc.update
 import kotlin.random.Random
 
 object AccountsRepository {
+
+    fun emailExists(
+        email: String
+    ): Boolean {
+
+        val normalizedEmail =
+            email
+                .trim()
+                .lowercase()
+
+        return transaction {
+
+            AccountsTable
+                .selectAll()
+                .where {
+                    AccountsTable.email eq normalizedEmail
+                }
+                .limit(1)
+                .singleOrNull() != null
+        }
+    }
+
+    fun createVerifiedAccount(
+        pending: PendingAccountData
+    ): AccountResponse {
+
+        return transaction {
+
+            val normalizedEmail =
+                pending.email
+                    .trim()
+                    .lowercase()
+
+            val existingAccount =
+                AccountsTable
+                    .selectAll()
+                    .where {
+                        AccountsTable.email eq normalizedEmail
+                    }
+                    .limit(1)
+                    .singleOrNull()
+
+            if (existingAccount != null) {
+
+                throw IllegalArgumentException(
+                    "An account with this email already exists."
+                )
+            }
+
+            val now =
+                System.currentTimeMillis()
+
+            val tenantCode =
+                generateUniqueTenantCode(
+                    pending.schoolName
+                )
+
+            val subscriptionAmountPerTermPesewas =
+                calculateSubscriptionAmountPerTermPesewas(
+                    pending.estimatedStudents
+                )
+
+            val accountId =
+                AccountsTable.insertAndGetId {
+
+                    it[email] =
+                        normalizedEmail
+
+                    /*
+                     * The pending table already contains a BCrypt hash.
+                     * Copy it directly. Do not hash it again.
+                     */
+                    it[AccountsTable.passwordHash] =
+                        pending.passwordHash
+
+                    it[schoolName] =
+                        pending.schoolName.trim()
+
+                    it[fullName] =
+                        pending.fullName.trim()
+
+                    it[phoneNumber] =
+                        pending.phoneNumber.trim()
+
+                    it[location] =
+                        pending.location.trim()
+
+                    it[AccountsTable.tenantCode] =
+                        tenantCode
+
+                    it[academicYear] =
+                        pending.academicYear.trim()
+
+                    it[estimatedStudents] =
+                        pending.estimatedStudents
+
+                    it[AccountsTable.subscriptionAmountPerTermPesewas] =
+                        subscriptionAmountPerTermPesewas
+
+                    /*
+                     * The verification token was already successfully checked.
+                     */
+                    it[isEmailVerified] =
+                        true
+
+                    /*
+                     * Active can remain true if verification alone activates
+                     * the account in your current business rules.
+                     */
+                    it[isActive] =
+                        true
+
+                    it[isStaff] =
+                        false
+
+                    it[profilePictureUrl] =
+                        pending.profilePictureUrl
+                            ?.trim()
+                            ?.ifBlank { null }
+
+                    it[AccountsTable.emailVerificationTokenHash] =
+                        null
+
+                    it[AccountsTable.emailVerificationExpiresAtEpochMillis] =
+                        null
+
+                    it[createdAtEpochMillis] =
+                        now
+                }.value
+
+            AccountsTable
+                .selectAll()
+                .where {
+                    AccountsTable.id eq accountId
+                }
+                .singleOrNull()
+                ?.toAccount()
+                ?.toResponse()
+                ?: error(
+                    "Verified account was created but could not be found."
+                )
+        }
+    }
+
+
 
     fun updateSchoolBrandingWithoutLogo(
         tenantCode: String,
@@ -721,7 +867,7 @@ object AccountsRepository {
 
 
 
-    private fun validateCreateRequest(
+    fun validateCreateRequest(
         req: CreateAccountRequest
     ) {
         val errors = mutableListOf<String>()
