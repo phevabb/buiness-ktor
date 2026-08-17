@@ -7,6 +7,10 @@ import org.jetbrains.exposed.v1.core.dao.id.IntIdTable
 
 object AccountsTable : IntIdTable("accounts") {
 
+
+    val email = varchar("email", 255).uniqueIndex()
+    val tenantCode = varchar("tenant_code", 100).uniqueIndex()
+
     val schoolName = varchar("school_name", 255)
 
     val schoolLogoUrl = varchar("school_logo_url", 500).nullable()
@@ -20,16 +24,12 @@ object AccountsTable : IntIdTable("accounts") {
 
     val adminPin = varchar("admin_pin", 50).nullable()
 
-
-
-    val email = varchar("email", 255).uniqueIndex()
     val passwordHash = varchar("password_hash", 255)
 
 
     val fullName = varchar("full_name", 255)
     val phoneNumber = varchar("phone_number", 30)
-    val tenantCode = varchar("tenant_code", 100).uniqueIndex()
-    val academicYear = varchar("academic_year", 20)
+       val academicYear = varchar("academic_year", 20)
     val estimatedStudents = integer("estimated_students")
     val subscriptionAmountPerTermPesewas = long("subscription_amount_per_term_pesewas")
     val isActive = bool("is_active").default(false)

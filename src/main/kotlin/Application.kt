@@ -17,11 +17,17 @@ import io.ktor.client.plugins.contentnegotiation.ContentNegotiation as ClientCon
 import io.ktor.serialization.kotlinx.json.json
 import io.ktor.server.application.Application
 import io.ktor.server.application.ApplicationStopped
+import io.ktor.server.routing.route
 import io.ktor.server.routing.routing
 import kotlinx.serialization.json.Json
 import seo.seoRoutes
+import sms.routes.smsRoutes
+import sms.routes.smsWalletClientRoutes
+import sms.routes.smsWalletPurchaseRoutes
+import sms.routes.smsWalletTopUpRoutes
 import superadmin.client.KtorTenantInternalBillingClient
 import superadmin.repos.SuperAdminBillingRepositoryImpl
+import superadmin.routes.sms.smsWalletAdminRoutes
 import superadmin.services.SuperAdminBillingService
 
 fun Application.module() {
@@ -170,6 +176,14 @@ fun Application.module() {
         superAdminBillingRoutes(
             superAdminBillingService
         )
+
+        route("/api") {
+            smsRoutes()
+            smsWalletTopUpRoutes()
+            smsWalletAdminRoutes()
+            smsWalletClientRoutes()
+            smsWalletPurchaseRoutes()
+        }
     }
 
     println("========== [BUSINESS APP STARTED SUCCESSFULLY] ==========")

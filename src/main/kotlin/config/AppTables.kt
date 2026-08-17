@@ -12,6 +12,7 @@ import com.example.superadmin.table.PaymentTransactionsTable
 import com.example.superadmin.table.SubscriptionInvoicesTable
 import com.example.superadmin.table.SuperAdminsTable
 import org.jetbrains.exposed.v1.core.Table
+import sms.tables.SmsWalletTopUpPaymentsTable
 
 object AppTables {
     val all: Array<Table> = arrayOf(
@@ -26,6 +27,9 @@ object AppTables {
         SubscriptionInvoicesTable,
         PaymentTransactionsTable,
         PendingAccountsTable,
+        SmsWalletTopUpPaymentsTable,
+
+
 
         )
 }

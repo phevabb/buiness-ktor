@@ -100,7 +100,71 @@ fun Route.accountRoutes() {
         }
     }
 
+    get("/email/{tenantCode}") {
 
+        try {
+
+            val tenantCode =
+                call.parameters["tenantCode"]
+                    ?: throw IllegalArgumentException(
+                        "Tenant code is required."
+                    )
+
+            if (tenantCode.isBlank()) {
+
+                call.respond(
+                    HttpStatusCode.BadRequest,
+                    MessageResponse(
+                        "Tenant code is required."
+                    )
+                )
+
+                return@get
+            }
+
+            val response =
+                AccountsRepository.getEmailByTenantCode(
+                    tenantCode = tenantCode
+                )
+
+            if (response == null) {
+
+                call.respond(
+                    HttpStatusCode.NotFound,
+                    MessageResponse(
+                        "Account email not found for this tenant."
+                    )
+                )
+
+                return@get
+            }
+
+            call.respond(
+                HttpStatusCode.OK,
+                response
+            )
+
+        } catch (e: IllegalArgumentException) {
+
+            call.respond(
+                HttpStatusCode.BadRequest,
+                MessageResponse(
+                    e.message ?: "Invalid request."
+                )
+            )
+
+        } catch (e: Exception) {
+
+            e.printStackTrace()
+
+            call.respond(
+                HttpStatusCode.InternalServerError,
+                MessageResponse(
+                    e.message ?: "Unable to retrieve account email."
+                )
+            )
+        }
+    }
 
     post("/upload-school-logo/{tenantCode}") {
 

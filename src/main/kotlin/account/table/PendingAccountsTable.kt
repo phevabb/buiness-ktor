@@ -6,6 +6,14 @@ import org.jetbrains.exposed.v1.core.dao.id.IntIdTable
 
 object PendingAccountsTable : IntIdTable("pending_accounts") {
 
+    val emailVerificationTokenHash =
+        varchar(
+            name = "email_verification_token_hash",
+            length = 255
+        ).uniqueIndex()
+
+
+
     val email =
         varchar(
             name = "email",
@@ -62,11 +70,7 @@ object PendingAccountsTable : IntIdTable("pending_accounts") {
             length = 500
     ).nullable()
 
-    val emailVerificationTokenHash =
-        varchar(
-            name = "email_verification_token_hash",
-            length = 255
-        ).uniqueIndex()
+
 
     val emailVerificationExpiresAtEpochMillis =
         long(

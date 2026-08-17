@@ -3,6 +3,7 @@ package com.example.account.repo
 
 
 
+import account.dto.AccountEmailResponse
 import account.dto.SchoolProfileResponse
 import account.model.PendingAccountData
 import com.example.account.dto.AccountResponse
@@ -24,6 +25,28 @@ import org.jetbrains.exposed.v1.jdbc.update
 import kotlin.random.Random
 
 object AccountsRepository {
+
+    fun getEmailByTenantCode(
+        tenantCode: String
+    ): AccountEmailResponse? {
+
+        return transaction {
+
+            AccountsTable
+                .selectAll()
+                .where {
+                    AccountsTable.tenantCode eq tenantCode
+                }
+                .singleOrNull()
+                ?.let { row ->
+
+                    AccountEmailResponse(
+                        tenantCode = row[AccountsTable.tenantCode],
+                        email = row[AccountsTable.email]
+                    )
+                }
+        }
+    }
 
     fun emailExists(
         email: String
