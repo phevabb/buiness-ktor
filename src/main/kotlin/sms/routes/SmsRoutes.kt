@@ -12,6 +12,9 @@ import io.ktor.server.routing.put
 import io.ktor.server.routing.route
 import sms.dto.RequestSenderIdRequest
 import sms.dto.SenderIdMessageResponse
+import sms.services.AdminSenderIdSmsNotifier
+import sms.services.SchoolOwnerContactService
+import sms.services.SenderIdApprovalSmsNotifier
 import superadmin.dto.sms.RejectSenderIdRequest
 import superadmin.services.TenantSmsService
 
@@ -62,6 +65,29 @@ fun Route.smsRoutes() {
                         id = id
                     )
 
+                /*
+                 * Send SMS only after ktor-tenant successfully approves the sender ID.
+                 */
+                val ownerPhone =
+                    SchoolOwnerContactService.findOwnerPhoneByTenantCode(
+                        tenantCode = response.tenantCode
+                    )
+
+                if (ownerPhone.isNullOrBlank()) {
+
+                    println(
+                        "Sender ID approved but owner phone number was not found. tenantCode=${response.tenantCode}, schoolName=${response.schoolName}"
+                    )
+
+                } else {
+
+                    SenderIdApprovalSmsNotifier.notifyApprovalAsync(
+                        phone = ownerPhone,
+                        schoolName = response.schoolName,
+                        approvedSenderId = response.senderId
+                    )
+                }
+
                 call.respond(
                     HttpStatusCode.OK,
                     response
@@ -92,6 +118,11 @@ fun Route.smsRoutes() {
                 )
             }
         }
+
+
+
+
+
 
         put("/sender-id/{id}/reject") {
 
@@ -264,6 +295,7 @@ fun Route.smsRoutes() {
                     call.receive<RequestSenderIdRequest>()
 
                 if (request.tenantCode.isBlank()) {
+
                     call.respond(
                         HttpStatusCode.BadRequest,
                         SenderIdMessageResponse(
@@ -276,6 +308,7 @@ fun Route.smsRoutes() {
                 }
 
                 if (request.senderId.isBlank()) {
+
                     call.respond(
                         HttpStatusCode.BadRequest,
                         SenderIdMessageResponse(
@@ -291,6 +324,16 @@ fun Route.smsRoutes() {
                     TenantSmsService.requestSenderId(
                         request
                     )
+
+                /*
+                 * Send admin SMS only after ktor-tenant returns a successful response.
+                 * If SMS notification fails, the sender ID request should still remain successful.
+                 */
+                AdminSenderIdSmsNotifier.notifySenderIdRequestAsync(
+                    schoolName = response.schoolName,
+                    tenantCode = response.tenantCode,
+                    requestedSenderId = response.senderId
+                )
 
                 call.respond(
                     HttpStatusCode.Created,
@@ -324,7 +367,8 @@ fun Route.smsRoutes() {
                         message = message
                     )
                 )
-            }}
+            }
+        }
 
         get("/sender-id/latest/{tenantCode}") {
 
