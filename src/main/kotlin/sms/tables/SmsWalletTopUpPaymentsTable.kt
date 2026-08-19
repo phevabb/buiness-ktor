@@ -103,3 +103,7 @@ object SmsWalletTopUpPaymentsTable : IntIdTable("sms_wallet_topup_payments") {
             length = 50
         ).nullable()
 }
+
+
+
+

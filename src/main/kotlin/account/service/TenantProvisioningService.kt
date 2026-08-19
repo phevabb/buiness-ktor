@@ -31,9 +31,64 @@ import io.ktor.client.request.forms.submitFormWithBinaryData
 import io.ktor.http.Headers
 import io.ktor.http.HttpHeaders
 import jdk.javadoc.internal.doclets.formats.html.markup.HtmlStyle
+import tenant.services.dto.UpdateSchoolBrandingWithoutLogoRequest
 
 // this is more of a repo
 object TenantProvisioningService {
+
+
+    suspend fun updateSchoolBrandingWithoutLogo(
+        tenantCode: String,
+        schoolName: String,
+        schoolMotto: String?,
+        location: String?
+    ): Boolean {
+
+        val response =
+            client.put(
+                "${AppConfig.tenantApiBaseUrl}/internal/tenants/update-school-branding-without-logo"
+            ) {
+
+                contentType(
+                    ContentType.Application.Json
+                )
+
+                header(
+                    "X-Internal-Api-Key",
+                    AppConfig.tenantInternalApiKey
+                )
+
+                setBody(
+                    UpdateSchoolBrandingWithoutLogoRequest(
+                        tenantCode = tenantCode,
+                        schoolName = schoolName,
+                        schoolMotto = schoolMotto,
+                        location = location
+                    )
+                )
+            }
+
+        val bodyText =
+            response.bodyAsText()
+
+        println(
+            "Tenant branding without logo update status = ${response.status}"
+        )
+
+        println(
+            "Tenant branding without logo update body = $bodyText"
+        )
+
+        if (!response.status.isSuccess()) {
+
+            throw IllegalStateException(
+                "Tenant branding update failed. Status: ${response.status.value}. Body: $bodyText"
+            )
+        }
+
+        return true
+    }
+
 
     suspend fun uploadSchoolLogo(
         tenantCode: String,

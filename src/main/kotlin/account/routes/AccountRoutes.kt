@@ -290,11 +290,15 @@ fun Route.accountRoutes() {
         }
     }
 
+
+
+
     put("/update-school-branding") {
 
         try {
 
             println("✅ [update-school-branding] Route hit")
+
             println(
                 "✅ [update-school-branding] Content-Type = ${
                     call.request.headers["Content-Type"]
@@ -324,11 +328,15 @@ fun Route.accountRoutes() {
                 )
             }
 
+            /*
+             * Important:
+             * This must NOT send schoolLogoUrl = null.
+             * Otherwise the tenant school_logo_url may be cleared.
+             */
             val tenantUpdated =
-                TenantProvisioningService.updateSchoolBranding(
+                TenantProvisioningService.updateSchoolBrandingWithoutLogo(
                     tenantCode = request.tenantCode,
                     schoolName = request.schoolName,
-                    schoolLogoUrl = null,
                     schoolMotto = request.schoolMotto,
                     location = request.location
                 )
@@ -366,7 +374,6 @@ fun Route.accountRoutes() {
             )
         }
     }
-
 
     post("/register") {
 
