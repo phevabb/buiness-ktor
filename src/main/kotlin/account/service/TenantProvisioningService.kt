@@ -46,7 +46,7 @@ object TenantProvisioningService {
 
         val response =
             client.put(
-                "${AppConfig.tenantApiBaseUrl}/internal/tenants/update-school-branding-without-logo"
+                "${AppConfig.tenantApiBaseUrl}/api/public/internal/tenants/update-school-branding-without-logo"
             ) {
 
                 contentType(
