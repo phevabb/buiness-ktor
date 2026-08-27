@@ -41,22 +41,14 @@ object AdminSenderIdSmsNotifier {
             SupervisorJob() + Dispatchers.IO
         )
 
-    private const val endpoint =
-        "https://api.mnotify.com/api/sms/quick"
 
-    private const val adminPhone =
-        "0246875311"
+    val adminPhone = AppConfig.adminPhone
 
-    private const val adminSenderId =
-        "phenasystem"
 
-    private val apiKey: String
-        get() =
-            "CelTN4i2JFPI2ZpknqYl0azod"
+    val endpoint = AppConfig.mnotifyEndpoint
+    val adminSenderId = AppConfig.adminSenderId
+    val apiKey = AppConfig.mnotifyApiKey
 
-//    private val apiKey: String
-//        get() =
-//            AppConfig.mnotifyApiKey.trim()
 
 
 

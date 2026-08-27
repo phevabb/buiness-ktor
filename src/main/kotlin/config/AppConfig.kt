@@ -2,46 +2,66 @@ package config
 
 object AppConfig {
 
-    private fun getEnv(name: String, default: String): String {
-        return System.getenv(name) ?: default
+    private fun getRequiredEnv(name: String): String {
+        return System.getenv(name)
+            ?: error("Required environment variable '$name' is not set")
     }
 
+    val adminPhone: String
+        get() = getRequiredEnv("ADMINPHONE")
+
+    val mnotifyEndpoint: String
+        get() = getRequiredEnv("MNOTIFY_ENDPOINT")
+
+    val adminSenderId: String
+        get() = getRequiredEnv("MNOTIFY_ADMIN_SENDER_ID")
+
+    val mnotifyApiKey: String
+        get() = getRequiredEnv("MNOTIFY_API_KEY")
+
+
+
+
+
     val publicApiBaseUrl: String
-        get() = getEnv("PUBLIC_API_BASE_URL", "http://127.0.0.1:9000")
+        get() = getRequiredEnv("PUBLIC_API_BASE_URL")
 
     val tenantApiBaseUrl: String
-        get() = getEnv("TENANT_API_BASE_URL", "http://127.0.0.1:9001")
+        get() = getRequiredEnv("TENANT_API_BASE_URL")
 
     val businessFrontendUrl: String
-        get() = getEnv("BUSINESS_FRONTEND_URL", "http://localhost:5173")
+        get() = getRequiredEnv("BUSINESS_FRONTEND_URL")
 
     val tenantInternalApiKey: String
-        get() = getEnv("TENANT_INTERNAL_API_KEY", "change-this-secret-key")
+        get() = getRequiredEnv("TENANT_INTERNAL_API_KEY")
 
     val smtpHost: String
-        get() = getEnv("SMTP_HOST", "mail.privateemail.com")
+        get() = getRequiredEnv("SMTP_HOST")
 
     val smtpPort: Int
-        get() = getEnv("SMTP_PORT", "465").toInt()
+        get() = getRequiredEnv("SMTP_PORT").toIntOrNull()
+            ?: error("Environment variable 'SMTP_PORT' must be a valid integer")
 
     val smtpUsername: String
-        get() = getEnv("SMTP_USERNAME", "support@phenaschool.com")
+        get() = getRequiredEnv("SMTP_USERNAME")
 
     val smtpPassword: String
-        get() = getEnv("SMTP_PASSWORD", "")
+        get() = getRequiredEnv("SMTP_PASSWORD")
 
     val smtpFromEmail: String
-        get() = getEnv("SMTP_FROM_EMAIL", smtpUsername)
+        get() = getRequiredEnv("SMTP_FROM_EMAIL")
 
     val smtpFromName: String
-        get() = getEnv("SMTP_FROM_NAME", "Phena School Management System")
+        get() = getRequiredEnv("SMTP_FROM_NAME")
 
     val emailUseSsl: Boolean
-        get() = getEnv("EMAIL_USE_SSL", "true").toBoolean()
+        get() = getRequiredEnv("EMAIL_USE_SSL").toBooleanStrictOrNull()
+            ?: error("Environment variable 'EMAIL_USE_SSL' must be true or false")
 
     val emailDebug: Boolean
-        get() = getEnv("EMAIL_DEBUG", "true").toBoolean()
+        get() = getRequiredEnv("EMAIL_DEBUG").toBooleanStrictOrNull()
+            ?: error("Environment variable 'EMAIL_DEBUG' must be true or false")
 
     val paystackSecretKey: String
-        get() = getEnv("PAYSTACK_SECRET_KEY", "sk_test_7b250f25faa65af86b48c4d5ff006db68c275799")
+        get() = getRequiredEnv("PAYSTACK_SECRET_KEY")
 }
